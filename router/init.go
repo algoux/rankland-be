@@ -12,8 +12,10 @@ func Init(host, port, cors string) error {
 	// 默认开启了 logger 和 recovery
 	router := gin.Default()
 
-	// 启用跨域拦截
-	router.Use(middleware.Cors(cors))
+	router.Use(
+		middleware.Cors(cors), // 启用跨域拦截
+		middleware.Error(),    // 启用 Error 处理
+	)
 
 	group(router)
 
@@ -30,4 +32,5 @@ func group(r *gin.Engine) {
 	})
 
 	file(r)
+	ranklist(r)
 }

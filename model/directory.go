@@ -10,8 +10,8 @@ import (
 type Directory struct {
 	ID       int64 `gorm:"primary_key"`
 	Name     string
-	ParentID string
-	Type     string
+	ParentID int64
+	Type     int32
 	Content  string
 
 	CreatedAt time.Time

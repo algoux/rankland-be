@@ -9,6 +9,7 @@ import (
 
 type File struct {
 	ID   int64 `gorm:"primary_key"`
+	Name string
 	MD5  string
 	Path string
 
