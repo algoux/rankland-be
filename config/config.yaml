@@ -1,0 +1,29 @@
+# 项目启动环境
+application:
+  host: 127.0.0.1  # 主机ip 或者域名，默认0.0.0.0
+  port: 8000 # 服务端口
+  cors-allow-origin: "*" # 允许的跨域请求
+  migration: false # 数据库迁移，需确定数据库是否正常
+log:
+  dir: temp/logs # 日志文件存放路径
+jwt:
+  secret: acm_mushan # JWT 加密字符串
+  timeout: 5 # 过期时间单位：小时
+
+# redis 配置
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: ""
+  database: 0
+  max-retry: 3 # 重试次数
+
+# mysql 数据库配置
+mysql:
+  username: root
+  password: mushan
+  host: 127.0.0.1
+  port: 3306
+  database: oj_space
+  charset: utf8
+  parse-time: true # 解析时间格式

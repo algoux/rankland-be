@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	// migrate.Sqlite()
 	if err := database.InitSqlite(); err != nil {
 		panic(err)
 	}

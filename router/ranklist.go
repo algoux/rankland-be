@@ -9,8 +9,9 @@ import (
 func ranklist(r *gin.Engine) {
 	rg := r.Group("/rank")
 	{
-		rg.GET("/dir", api.GetRankNode)
-		rg.POST("/dir", api.CreateRankNode)
-		rg.GET("/node", api.GetRank)
+		// rg.GET("/dir", api.GetRankNode)
+		// rg.GET("/node", api.GetRank)
+		rg.POST("/official", api.CreateRankNode)
+		rg.GET("/official", api.GetOfficial)
 	}
 }

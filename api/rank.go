@@ -9,6 +9,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const OfficialRoot int64 = 1
+
+func GetOfficial(c *gin.Context) {
+	id := OfficialRoot
+	if strID, ok := c.GetQuery("id"); ok {
+		i, err := strconv.ParseInt(strID, 10, 64)
+		if err != nil {
+			c.Errors = append(c.Errors, errcode.ParamErr)
+			return
+		}
+
+		id = i
+	}
+
+	data, err := logic.GetRanks(id)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "成功",
+		"data":    data,
+	})
+}
+
 func GetRankNode(c *gin.Context) {
 	strID := c.DefaultQuery("id", "1")
 	id, err := strconv.ParseInt(strID, 10, 64)
@@ -16,7 +43,7 @@ func GetRankNode(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	dirs, err := logic.GetChildDirsByID(id)
+	dirs, err := logic.GetChildNodesByID(id)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
@@ -40,8 +67,16 @@ func CreateRankNode(c *gin.Context) {
 	if n, ok := any["name"]; ok {
 		name = n.(string)
 	}
-	// 根节点 id = 1
-	var parentID int64 = 1
+
+	var uniqueKey string
+	if u, ok := any["uniqueKey"]; ok {
+		uniqueKey = u.(string)
+	} else {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+
+	var parentID int64 = OfficialRoot
 	if pid, ok := any["parentID"]; ok {
 		id, err := strconv.ParseInt(pid.(string), 10, 64)
 		if err != nil {
@@ -54,12 +89,12 @@ func CreateRankNode(c *gin.Context) {
 	if t, ok := any["type"]; ok {
 		typ = int32(t.(float64))
 	}
-	var content string
-	if con, ok := any["content"]; ok {
-		content = con.(string)
+	var fileID string
+	if con, ok := any["fileID"]; ok {
+		fileID = con.(string)
 	}
 
-	id, err := logic.CreateDir(name, parentID, int32(typ), content)
+	id, err := logic.CreateNode(name, uniqueKey, parentID, int32(typ), fileID)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return

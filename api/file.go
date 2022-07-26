@@ -35,7 +35,7 @@ func Upload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
+		"code":    0,
 		"message": "成功",
 		"data": map[string]interface{}{
 			"id": strconv.FormatInt(id, 10),

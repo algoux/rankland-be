@@ -26,7 +26,7 @@ func group(r *gin.Engine) {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"code":    0,
-			"message": "ok",
+			"message": "成功",
 			"data":    "hello word",
 		})
 	})
