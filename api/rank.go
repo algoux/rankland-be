@@ -2,8 +2,8 @@ package api
 
 import (
 	"net/http"
-	"ranklist/errcode"
-	"ranklist/logic"
+	"rankland/errcode"
+	"rankland/logic"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,7 +110,7 @@ func CreateRankNode(c *gin.Context) {
 }
 
 // 需要重新规划一下
-func GetRank(c *gin.Context) {
+func GetRankOld(c *gin.Context) {
 	strID, ok := c.GetQuery("id")
 	if !ok {
 		c.Errors = append(c.Errors, errcode.ParamErr)
@@ -129,4 +129,130 @@ func GetRank(c *gin.Context) {
 	}
 
 	c.File(path)
+}
+
+func GetRankGroup(c *gin.Context) {
+	key := c.Param("key")
+	var err error
+	rt := logic.NewRankGroup()
+
+	if rt.ID, err = strconv.ParseInt(key, 10, 64); err == nil {
+		if err := rt.GetByID(); err != nil {
+			c.Errors = append(c.Errors, errcode.ParamErr)
+			return
+		}
+		success(c, rt)
+		return
+	}
+
+	rt.Name = key
+	if err := rt.GetByName(); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	success(c, rt)
+}
+
+func CreateRankGroup(c *gin.Context) {
+	rt := logic.NewRankGroup()
+	if err := c.ShouldBindJSON(rt); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	if err := rt.Create(); err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	success(c, rt)
+}
+
+func UpdateRankGroup(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	rt := logic.NewRankGroup()
+	if err := c.ShouldBindJSON(rt); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+
+	rt.ID = id
+	if err := rt.Update(); err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	success(c, rt)
+}
+
+func GetRank(c *gin.Context) {
+	key := c.Param("key")
+	var err error
+	r := logic.NewRank()
+
+	if r.ID, err = strconv.ParseInt(key, 10, 64); err == nil {
+		if err := r.GetByID(); err != nil {
+			c.Errors = append(c.Errors, errcode.ParamErr)
+			return
+		}
+		success(c, r)
+		return
+	}
+
+	r.UniqueKey = key
+	if err := r.GetByUniqueKey(); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	success(c, r)
+}
+
+func CreateRank(c *gin.Context) {
+	r := logic.NewRank()
+	if err := c.ShouldBindJSON(r); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	if err := r.Create(); err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	success(c, r)
+}
+
+func UpdateRank(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	r := logic.NewRank()
+	if err := c.ShouldBindJSON(r); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+
+	r.ID = id
+	if err := r.Update(); err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	success(c, r)
+}
+
+func SearchRank(c *gin.Context) {
+	q, ok := c.GetQuery("query")
+	if !ok {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+
+	rs := logic.NewRanks()
+	err := rs.Search(q)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	success(c, rs)
 }

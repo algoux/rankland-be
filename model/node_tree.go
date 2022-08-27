@@ -1,7 +1,7 @@
 package model
 
 import (
-	"ranklist/utils"
+	"rankland/utils"
 	"time"
 
 	"gorm.io/gorm"

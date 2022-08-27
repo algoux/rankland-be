@@ -1,7 +1,7 @@
 package migrate
 
 import (
-	"ranklist/model"
+	"rankland/model"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
@@ -15,9 +15,8 @@ func Sqlite() {
 		return
 	}
 
-	err = db.AutoMigrate(&model.File{}, &model.TreeNode{})
+	err = db.AutoMigrate(&model.File{}, &model.Rank{}, &model.RankGroup{}, &model.TreeNode{})
 	if err != nil {
 		logrus.WithError(err).Infof("auto migrate failed")
 	}
-	return
 }

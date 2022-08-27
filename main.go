@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ranklist/database"
-	"ranklist/router"
-	"ranklist/utils"
+	"rankland/database"
+	"rankland/router"
+	"rankland/utils"
 )
 
 func main() {

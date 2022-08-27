@@ -2,8 +2,8 @@ package logic
 
 import (
 	"encoding/json"
-	"ranklist/access"
-	"ranklist/model"
+	"rankland/access"
+	"rankland/model"
 	"time"
 )
 
@@ -101,4 +101,97 @@ func marshal(v interface{}) (map[string]interface{}, error) {
 	val := map[string]interface{}{}
 	err = json.Unmarshal(b, &val)
 	return val, err
+}
+
+type Rank struct {
+	ID        int64  `json:"id,string"`
+	UniqueKey string `json:"uniqueKey"`
+	Name      string `json:"name"`
+	Content   string `json:"content,omitempty"`
+	FileID    int64  `json:"fileID,string,omitempty"`
+	ViewCnt   int64  `json:"viewCnt"`
+
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func NewRank() *Rank {
+	return &Rank{}
+}
+
+func (r *Rank) GetByID() error {
+	rank, err := access.GetRankByID(r.ID)
+	if err != nil {
+		return err
+	}
+
+	r.UniqueKey = rank.UniqueKey
+	r.Name = rank.Name
+	r.Content = rank.Content
+	r.FileID = rank.FileID
+	r.ViewCnt = rank.ViewCnt
+	r.CreatedAt = rank.CreatedAt
+	r.UpdatedAt = rank.UpdatedAt
+	return nil
+}
+
+func (r *Rank) GetByUniqueKey() error {
+	rank, err := access.GetRankByUniqueKey(r.UniqueKey)
+	if err != nil {
+		return err
+	}
+
+	r.ID = rank.ID
+	r.Name = rank.Name
+	r.Content = rank.Content
+	r.FileID = rank.FileID
+	r.ViewCnt = rank.ViewCnt
+	r.CreatedAt = rank.CreatedAt
+	r.UpdatedAt = rank.UpdatedAt
+	return nil
+}
+
+func (r *Rank) Create() error {
+	id, err := access.CreateRank(r.UniqueKey, r.Name, r.Content, r.FileID)
+	if err != nil {
+		return err
+	}
+
+	r.ID = id
+	return nil
+}
+
+func (r *Rank) Update() error {
+	return access.UpdateRank(r.ID, r.UniqueKey, r.Name, r.Content, r.FileID)
+}
+
+type Ranks struct {
+	Ranks []Rank
+}
+
+func NewRanks() *Ranks {
+	return &Ranks{
+		Ranks: []Rank{},
+	}
+}
+
+func (r *Ranks) Search(query string) error {
+	rs, err := access.SearchRank(query)
+	if err != nil {
+		return err
+	}
+
+	for _, rank := range rs {
+		r.Ranks = append(r.Ranks, Rank{
+			ID:        rank.ID,
+			UniqueKey: rank.UniqueKey,
+			Name:      rank.Name,
+			Content:   rank.Content,
+			FileID:    rank.FileID,
+			ViewCnt:   rank.ViewCnt,
+			CreatedAt: rank.CreatedAt,
+			UpdatedAt: rank.UpdatedAt,
+		})
+	}
+	return nil
 }

@@ -44,8 +44,7 @@ type Config struct {
 func init() {
 	file, err := os.Open("config/config.yaml")
 	if err != nil {
-		logrus.Fatalf("config.yml file not found in config directory, error=%v", err)
-		panic(err)
+		logrus.WithError(err).Fatalf("config.yml file not found in config directory")
 	}
 
 	conf = &Config{}

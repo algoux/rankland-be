@@ -3,7 +3,8 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"ranklist/middleware"
+	"rankland/api"
+	"rankland/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +32,33 @@ func group(r *gin.Engine) {
 		})
 	})
 
-	file(r)
+	rank(r.Group("/rank"))
+	file(r.Group("/file"))
 	ranklist(r)
+}
+
+func rank(rg *gin.RouterGroup) {
+	rg.GET("/group/:key", api.GetRankGroup)
+	rg.POST("/group", api.CreateRankGroup)
+	rg.PUT("/group/:id", api.UpdateRankGroup)
+
+	rg.GET("/:key", api.GetRank)
+	rg.POST("/", api.CreateRank)
+	rg.PUT("/:id", api.UpdateRank)
+	rg.GET("/search", api.SearchRank)
+}
+
+func file(rg *gin.RouterGroup) {
+	rg.POST("/upload", api.Upload)
+	rg.GET("/download", api.Download)
+}
+
+func ranklist(r *gin.Engine) {
+	rg := r.Group("/rank")
+	{
+		// rg.GET("/dir", api.GetRankNode)
+		// rg.GET("/node", api.GetRank)
+		rg.POST("/official", api.CreateRankNode)
+		rg.GET("/official", api.GetOfficial)
+	}
 }

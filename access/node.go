@@ -1,8 +1,8 @@
 package access
 
 import (
-	"ranklist/database"
-	"ranklist/model"
+	"rankland/database"
+	"rankland/model"
 )
 
 func GetAllNodes() (map[int64]model.TreeNode, error) {

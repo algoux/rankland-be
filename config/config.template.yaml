@@ -7,7 +7,7 @@ application:
 log:
   dir: temp/logs # 日志文件存放路径
 jwt:
-  secret: acm_mushan # JWT 加密字符串
+  secret: rankland # JWT 加密字符串
   timeout: 5 # 过期时间单位：小时
 
 # redis 配置
@@ -24,6 +24,6 @@ mysql:
   password: mushan
   host: 127.0.0.1
   port: 3306
-  database: oj_space
-  charset: utf8
+  database: rankland
+  charset: utf8mb4
   parse-time: true # 解析时间格式

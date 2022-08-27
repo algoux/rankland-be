@@ -3,8 +3,8 @@ package api
 import (
 	"bytes"
 	"net/http"
-	"ranklist/errcode"
-	"ranklist/logic"
+	"rankland/errcode"
+	"rankland/logic"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

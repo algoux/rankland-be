@@ -1,15 +1,14 @@
 package access
 
 import (
-	"ranklist/database"
-	"ranklist/model"
+	"rankland/database"
+	"rankland/model"
 )
 
-func GetFileByID(id int64) (*model.File, error) {
-	file := &model.File{}
+func GetFileByID(id int64) (file model.File, err error) {
 	db := database.GetDB().Where("id = ?", id)
-	if err := db.First(file).Error; err != nil {
-		return nil, err
+	if err := db.First(&file).Error; err != nil {
+		return file, err
 	}
 
 	return file, nil
@@ -27,9 +26,9 @@ func GetFileID(md5 string) (int64, error) {
 
 func CreateFile(name, md5, path string) (int64, error) {
 	file := &model.File{
-		Name: name,
-		MD5:  md5,
-		Path: path,
+		Name:   name,
+		Secret: md5,
+		Path:   path,
 	}
 	if err := database.GetDB().Create(file).Error; err != nil {
 		return 0, err

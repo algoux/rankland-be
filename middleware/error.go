@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"ranklist/errcode"
+	"rankland/errcode"
 
 	"github.com/gin-gonic/gin"
 )

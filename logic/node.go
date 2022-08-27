@@ -2,7 +2,7 @@ package logic
 
 import (
 	"encoding/json"
-	"ranklist/access"
+	"rankland/access"
 )
 
 type Any map[string]interface{}

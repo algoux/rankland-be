@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"os"
-	"ranklist/access"
+	"rankland/access"
 	"time"
 )
 
@@ -63,4 +63,28 @@ func writeFile(name, path string, file []byte) error {
 	}
 	dn := fmt.Sprintf("%v/%v/%v", fileDir, path, name)
 	return os.WriteFile(dn, file, 0666)
+}
+
+type File struct {
+	ID     int64  `gorm:"primary_key"`
+	Name   string `gorm:"type:varchar(200)"`
+	Secret string `gorm:"type:varchar(200)"`
+	Path   string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func NewFile() *File {
+	return &File{}
+}
+
+func (f *File) GetByID() error {
+	file, err := access.GetFileByID(f.ID)
+	if err != nil {
+		return err
+	}
+
+	f.Name = file.Name
+	return nil
 }

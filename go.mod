@@ -1,4 +1,4 @@
-module ranklist
+module rankland
 
 go 1.16
 
