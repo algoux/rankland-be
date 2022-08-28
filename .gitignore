@@ -18,3 +18,4 @@
 file/*
 config/config.yaml
 output
+sqlite.db

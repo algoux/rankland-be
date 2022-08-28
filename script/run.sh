@@ -9,8 +9,7 @@ if [ ! -d $output ];then
     mkdir $output
 fi
 
-cp -rf $baseDir/config $output/config
-cp -rf $baseDir/file $output/file
+cp -rf $baseDir/config $output
+cp -rf $baseDir/file $output
 
-go build -o $output/rankland $baseDir
-sh $output/rankland
+go build -o $output/rankland $baseDir 
