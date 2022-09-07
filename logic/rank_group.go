@@ -6,50 +6,67 @@ import (
 )
 
 type RankGroup struct {
-	ID      int64  `json:"id,string"`
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	ID        int64   `json:"id,string"`
+	UniqueKey string  `json:"unique_key,omitempty"` // 暂时不支持 uk 等后续看是否需要支持
+	Name      *string `json:"name"`
+	Content   *string `json:"content"`
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func NewRankGroup() *RankGroup {
-	return &RankGroup{}
-}
-
-func (rt *RankGroup) GetByID() error {
-	RankGroup, err := access.GetRankGroupByID(rt.ID)
+func GetRankGroupByID(id int64) (*RankGroup, error) {
+	rg, err := access.GetRankGroupByID(id)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if rg == nil {
+		return nil, nil
 	}
 
-	rt.Name = RankGroup.Name
-	rt.Content = RankGroup.Content
-	return nil
+	return &RankGroup{
+		ID:        rg.ID,
+		Name:      &rg.Name,
+		Content:   &rg.Content,
+		CreatedAt: rg.CreatedAt,
+		UpdatedAt: rg.UpdatedAt,
+	}, nil
 }
 
-func (rt *RankGroup) GetByName() error {
-	RankGroup, err := access.GetRankGroupByName(rt.Name)
+func GetRankGroupByName(name string) (*RankGroup, error) {
+	rg, err := access.GetRankGroupByName(name)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if rg == nil {
+		return nil, nil
 	}
 
-	rt.ID = RankGroup.ID
-	rt.Content = RankGroup.Content
-	return nil
+	return &RankGroup{
+		ID:        rg.ID,
+		Name:      &rg.Name,
+		Content:   &rg.Content,
+		CreatedAt: rg.CreatedAt,
+		UpdatedAt: rg.UpdatedAt,
+	}, nil
 }
 
-func (rt *RankGroup) Create() error {
-	id, err := access.CreateRankGroup(rt.Name, rt.Content)
+func CreateRankGroup(rg RankGroup) (int64, error) {
+	id, err := access.CreateRankGroup(*rg.Name, *rg.Content)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	rt.ID = id
-	return nil
+	return id, nil
 }
 
-func (rt *RankGroup) Update() error {
-	return access.UpdateRankGroup(rt.ID, rt.Name, rt.Content)
+func UpdateRankGroup(rg RankGroup) error {
+	updates := make(map[string]interface{})
+	if rg.Name != nil {
+		updates["name"] = *rg.Name
+	}
+	if rg.Content != nil {
+		updates["content"] = *rg.Content
+	}
+	return access.UpdateRankGroup(rg.ID, updates)
 }

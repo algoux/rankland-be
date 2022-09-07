@@ -46,18 +46,18 @@ func Upload(c *gin.Context) {
 func Download(c *gin.Context) {
 	strID, ok := c.GetQuery("id")
 	if !ok {
-		c.Errors = append(c.Errors, errcode.ParamErr)
+		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		c.Errors = append(c.Errors, errcode.ParamErr)
+		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
 
 	name, path, err := logic.GetFileByID(id)
 	if err != nil {
-		c.Errors = append(c.Errors, errcode.FileReadErr)
+		c.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
 

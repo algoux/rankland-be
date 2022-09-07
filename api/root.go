@@ -12,7 +12,7 @@ type Resp struct {
 	Data    interface{} `json:"data"`
 }
 
-func success(c *gin.Context, v interface{}) {
+func statusOk(c *gin.Context, v interface{}) {
 	c.JSON(http.StatusOK, Resp{
 		Code:    0,
 		Message: "成功",

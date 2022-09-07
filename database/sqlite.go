@@ -15,7 +15,7 @@ func Sqlite() {
 		return
 	}
 
-	err = db.AutoMigrate(&model.File{}, &model.Rank{}, &model.RankGroup{}, &model.TreeNode{})
+	err = db.AutoMigrate(&model.File{}, &model.Rank{}, &model.RankGroup{})
 	if err != nil {
 		logrus.WithError(err).Infof("auto migrate failed")
 	}

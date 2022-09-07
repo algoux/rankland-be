@@ -34,7 +34,6 @@ func group(r *gin.Engine) {
 
 	rank(r.Group("/rank"))
 	file(r.Group("/file"))
-	ranklist(r)
 }
 
 func rank(rg *gin.RouterGroup) {
@@ -51,14 +50,4 @@ func rank(rg *gin.RouterGroup) {
 func file(rg *gin.RouterGroup) {
 	rg.POST("/upload", api.Upload)
 	rg.GET("/download", api.Download)
-}
-
-func ranklist(r *gin.Engine) {
-	rg := r.Group("/rank")
-	{
-		// rg.GET("/dir", api.GetRankNode)
-		// rg.GET("/node", api.GetRank)
-		rg.POST("/official", api.CreateRankNode)
-		rg.GET("/official", api.GetOfficial)
-	}
 }
