@@ -7,7 +7,7 @@ import (
 
 type RankGroup struct {
 	ID        int64   `json:"id,string"`
-	UniqueKey string  `json:"unique_key"`
+	UniqueKey string  `json:"uniqueKey"`
 	Name      *string `json:"name"`
 	Content   *string `json:"content"`
 

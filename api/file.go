@@ -46,12 +46,12 @@ func Upload(c *gin.Context) {
 func Download(c *gin.Context) {
 	strID, ok := c.GetQuery("id")
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusNotFound, gin.H{})
 		return
 	}
 	id, err := strconv.ParseInt(strID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusNotFound, gin.H{})
 		return
 	}
 
@@ -61,7 +61,7 @@ func Download(c *gin.Context) {
 		return
 	}
 	if name == "" || path == "" {
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusNotFound, gin.H{})
 		return
 	}
 

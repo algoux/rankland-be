@@ -45,7 +45,7 @@ func CreateRankGroup(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	if rg.Name == nil || utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5 || rg.Content == nil {
+	if utf8.RuneCountInString(strings.TrimSpace(rg.UniqueKey)) < 5 || rg.Name == nil || utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5 || rg.Content == nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
