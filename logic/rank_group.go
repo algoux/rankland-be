@@ -26,6 +26,7 @@ func GetRankGroupByID(id int64) (*RankGroup, error) {
 
 	return &RankGroup{
 		ID:        rg.ID,
+		UniqueKey: rg.UniqueKey,
 		Name:      &rg.Name,
 		Content:   &rg.Content,
 		CreatedAt: rg.CreatedAt,
