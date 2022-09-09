@@ -20,9 +20,9 @@ func GetRankGroupByID(id int64) (*model.RankGroup, error) {
 	return rg, nil
 }
 
-func GetRankGroupByName(name string) (*model.RankGroup, error) {
+func GetRankGroupByUniqueKey(uniqueKey string) (*model.RankGroup, error) {
 	rg := &model.RankGroup{}
-	db := database.GetDB().Where("name = ?", name)
+	db := database.GetDB().Where("unique_key = ?", uniqueKey)
 	if err := db.First(&rg).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -33,10 +33,11 @@ func GetRankGroupByName(name string) (*model.RankGroup, error) {
 	return rg, nil
 }
 
-func CreateRankGroup(name, content string) (id int64, err error) {
+func CreateRankGroup(uniqueKey, name, content string) (id int64, err error) {
 	rg := &model.RankGroup{
-		Name:    name,
-		Content: content,
+		UniqueKey: uniqueKey,
+		Name:      name,
+		Content:   content,
 	}
 	db := database.GetDB()
 	if err := db.Create(rg).Error; err != nil {

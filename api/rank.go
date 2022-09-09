@@ -26,9 +26,13 @@ func GetRankGroup(c *gin.Context) {
 		}
 	}
 
-	rg, err := logic.GetRankGroupByName(key)
+	rg, err := logic.GetRankGroupByUniqueKey(key)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	if rg == nil {
+		c.Errors = append(c.Errors, errcode.NoResultErr)
 		return
 	}
 
@@ -41,7 +45,7 @@ func CreateRankGroup(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	if rg.Name == nil || utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5 || rg.Content == nil || utf8.RuneCountInString(strings.TrimSpace(*rg.Content)) < 5 {
+	if rg.Name == nil || utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5 || rg.Content == nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
@@ -66,7 +70,7 @@ func UpdateRankGroup(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	if (rg.Name != nil && utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5) || (rg.Content != nil && utf8.RuneCountInString(strings.TrimSpace(*rg.Content)) < 5) {
+	if rg.Name != nil && utf8.RuneCountInString(strings.TrimSpace(*rg.Name)) < 5 {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
@@ -100,12 +104,22 @@ func GetRank(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
+	if r == nil {
+		c.Errors = append(c.Errors, errcode.NoResultErr)
+		return
+	}
+
 	statusOk(c, r)
 }
 
 func CreateRank(c *gin.Context) {
 	r := logic.Rank{}
 	if err := c.ShouldBindJSON(&r); err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+
+	if utf8.RuneCountInString(r.UniqueKey) < 5 {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
@@ -130,8 +144,7 @@ func UpdateRank(c *gin.Context) {
 		return
 	}
 
-	if (r.Name != nil && utf8.RuneCountInString(strings.TrimSpace(*r.Name)) < 5) ||
-		(r.Content != nil && utf8.RuneCountInString(strings.TrimSpace(*r.Content)) < 5) || (r.FileID != nil && *r.FileID < 0) {
+	if (r.Name != nil && utf8.RuneCountInString(strings.TrimSpace(*r.Name)) < 5) || (r.Content == nil && r.FileID == nil) || (r.FileID != nil && *r.FileID < 0) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}

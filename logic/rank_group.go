@@ -7,7 +7,7 @@ import (
 
 type RankGroup struct {
 	ID        int64   `json:"id,string"`
-	UniqueKey string  `json:"unique_key,omitempty"` // 暂时不支持 uk 等后续看是否需要支持
+	UniqueKey string  `json:"unique_key"`
 	Name      *string `json:"name"`
 	Content   *string `json:"content"`
 
@@ -33,8 +33,8 @@ func GetRankGroupByID(id int64) (*RankGroup, error) {
 	}, nil
 }
 
-func GetRankGroupByName(name string) (*RankGroup, error) {
-	rg, err := access.GetRankGroupByName(name)
+func GetRankGroupByUniqueKey(uniqueKey string) (*RankGroup, error) {
+	rg, err := access.GetRankGroupByUniqueKey(uniqueKey)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +44,7 @@ func GetRankGroupByName(name string) (*RankGroup, error) {
 
 	return &RankGroup{
 		ID:        rg.ID,
+		UniqueKey: rg.UniqueKey,
 		Name:      &rg.Name,
 		Content:   &rg.Content,
 		CreatedAt: rg.CreatedAt,
@@ -52,7 +53,7 @@ func GetRankGroupByName(name string) (*RankGroup, error) {
 }
 
 func CreateRankGroup(rg RankGroup) (int64, error) {
-	id, err := access.CreateRankGroup(*rg.Name, *rg.Content)
+	id, err := access.CreateRankGroup(rg.UniqueKey, *rg.Name, *rg.Content)
 	if err != nil {
 		return 0, err
 	}

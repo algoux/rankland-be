@@ -8,9 +8,10 @@ import (
 )
 
 type RankGroup struct {
-	ID      int64  `gorm:"primary_key"`
-	Name    string `gorm:"unique;not null"`
-	Content string `gorm:"type:TEXT"`
+	ID        int64  `gorm:"primary_key"`
+	UniqueKey string `gorm:"type:varchar(200);unique;not null"`
+	Name      string `gorm:"unique;not null"`
+	Content   string `gorm:"type:TEXT"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

@@ -3,11 +3,17 @@ package access
 import (
 	"rankland/database"
 	"rankland/model"
+
+	"gorm.io/gorm"
 )
 
-func GetFileByID(id int64) (file model.File, err error) {
+func GetFileByID(id int64) (file *model.File, err error) {
 	db := database.GetDB().Where("id = ?", id)
 	if err := db.First(&file).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+
 		return file, err
 	}
 

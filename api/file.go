@@ -60,6 +60,10 @@ func Download(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
+	if name == "" || path == "" {
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
 
 	// c.File(name)
 	c.FileAttachment(path, name)

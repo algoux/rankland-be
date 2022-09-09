@@ -7,6 +7,9 @@ import (
 )
 
 var (
+	InvalidRequestErr = publicErr(10, "无效请求")
+	NoResultErr       = publicErr(11, "没有合法数据")
+
 	// 请求错误
 	ParamErr        = publicErr(10001, "参数错误")
 	FileAnalysisErr = publicErr(11001, "文件解析错误")

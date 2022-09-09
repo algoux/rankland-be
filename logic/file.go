@@ -15,6 +15,9 @@ func GetFileByID(id int64) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	if f == nil {
+		return "", "", nil
+	}
 
 	return f.Name, fmt.Sprintf("%v/%v/%v", fileDir, f.Path, f.Name), nil
 }
