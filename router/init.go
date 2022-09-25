@@ -5,22 +5,26 @@ import (
 	"net/http"
 	"rankland/api"
 	"rankland/middleware"
+	"rankland/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Init(host, port, cors string) error {
+func InitGin() error {
+	app := utils.GetConfig().Application
 	// 默认开启了 logger 和 recovery
 	router := gin.Default()
+	if app.Env == utils.EnvProd {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	router.Use(
-		middleware.Cors(cors), // 启用跨域拦截
-		middleware.Error(),    // 启用 Error 处理
+		middleware.Cors(app.Cors), // 启用跨域拦截
+		middleware.Error(),        // 启用 Error 处理
 	)
 
 	group(router)
-
-	return router.Run(fmt.Sprintf("%v:%v", host, port))
+	return router.Run(fmt.Sprintf("%v:%v", app.Host, app.Port))
 }
 
 func group(r *gin.Engine) {

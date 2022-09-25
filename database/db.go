@@ -24,7 +24,7 @@ func InitPostgreSQL() error {
 }
 
 func GetDB() *gorm.DB {
-	if utils.GetConfig().Application.Env == "dev" {
+	if utils.GetConfig().Application.Env == utils.EnvDev {
 		return db.Debug()
 	}
 	return db

@@ -6,6 +6,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	EnvDev  = "dev"
+	EnvProd = "prod"
+)
+
 var conf *Config
 
 type Config struct {
@@ -41,7 +46,7 @@ type Config struct {
 }
 
 func InitConfig() error {
-	file, err := os.Open("config/config.dev.yaml")
+	file, err := os.Open("config/config.yaml")
 	if err != nil {
 		return err
 	}
