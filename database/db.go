@@ -1,34 +1,38 @@
 package database
 
 import (
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
+	"fmt"
+	"rankland/model"
+	"rankland/utils"
+
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
 
-func InitSqlite() error {
-	s, err := gorm.Open(sqlite.Open("sqlite.db"))
+func InitPostgreSQL() error {
+	psql := utils.GetConfig().PostgreSQL
+	dsn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable TimeZone=%v", psql.Host, psql.Port, psql.Username, psql.Password, psql.DBname, psql.TimeZone)
+	postgre, err := gorm.Open(postgres.Open(dsn))
 	if err != nil {
 		return err
 	}
 
-	db = s
-	return nil
-}
-
-func InitMySQL() error {
-	dsn := "user:password@/dbname?charset=utf8&parseTime=True&loc=Local"
-	m, err := gorm.Open(mysql.Open(dsn))
-	if err != nil {
-		return err
-	}
-
-	db = m
+	db = postgre
 	return nil
 }
 
 func GetDB() *gorm.DB {
+	if utils.GetConfig().Application.Env == "dev" {
+		return db.Debug()
+	}
 	return db
+}
+
+func Migration() error {
+	if err := db.AutoMigrate(&model.File{}, &model.Rank{}, &model.RankGroup{}); err != nil {
+		return err
+	}
+	return nil
 }

@@ -1,15 +1,16 @@
 package utils
 
-import "github.com/bwmarrin/snowflake"
+import (
+	"github.com/bwmarrin/snowflake"
+	"github.com/sirupsen/logrus"
+)
 
 var Generator *snowflake.Node
 
-func InitGenerator() error {
+func init() {
 	node, err := snowflake.NewNode(1)
 	if err != nil {
-		return err
+		logrus.WithError(err).Fatalf("init snowflake id generator failed")
 	}
 	Generator = node
-
-	return nil
 }

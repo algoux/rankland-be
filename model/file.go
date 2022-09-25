@@ -8,10 +8,10 @@ import (
 )
 
 type File struct {
-	ID     int64  `gorm:"primary_key"`
-	Name   string `gorm:"type:varchar(200)"`
-	Secret string `gorm:"type:varchar(200)"`
-	Path   string
+	ID     int64  `gorm:"type:bigint;primary_key"`
+	Name   string `gorm:"type:varchar(200);not null"`
+	Secret string `gorm:"type:varchar(200);not null"`
+	Path   string `gorm:"type:varchar(500);not null"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

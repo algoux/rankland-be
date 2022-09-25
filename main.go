@@ -4,19 +4,28 @@ import (
 	"rankland/database"
 	"rankland/router"
 	"rankland/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	// database.Sqlite()
-	if err := database.InitSqlite(); err != nil {
-		panic(err)
+	if err := utils.InitConfig(); err != nil {
+		logrus.WithError(err).Fatalf("init config failed")
 	}
 
-	if err := utils.InitGenerator(); err != nil {
-		panic(err)
+	if err := database.InitPostgreSQL(); err != nil {
+		logrus.WithError(err).Fatalf("init postgresql failed")
 	}
 
-	if err := router.Init("127.0.0.1", "8000", "*"); err != nil {
-		panic(err)
+	// DB 数据表迁移
+	app := utils.GetConfig().Application
+	if app.Migration {
+		if err := database.Migration(); err != nil {
+			logrus.WithError(err).Fatalf("migration db table failed")
+		}
+	}
+
+	if err := router.Init(app.Host, app.Port, app.Cors); err != nil {
+		logrus.WithError(err).Fatalf("init application failed")
 	}
 }

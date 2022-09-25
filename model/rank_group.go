@@ -8,9 +8,9 @@ import (
 )
 
 type RankGroup struct {
-	ID        int64  `gorm:"primary_key"`
+	ID        int64  `gorm:"type:bigint;primary_key"`
 	UniqueKey string `gorm:"type:varchar(200);unique;not null"`
-	Name      string `gorm:"unique;not null"`
+	Name      string `gorm:"type:varchar(200);not null"`
 	Content   string `gorm:"type:TEXT"`
 
 	CreatedAt time.Time
@@ -19,7 +19,7 @@ type RankGroup struct {
 }
 
 func (d *RankGroup) TableName() string {
-	return "ranklist"
+	return "rank_group"
 }
 
 func (d *RankGroup) BeforeCreate(tx *gorm.DB) error {

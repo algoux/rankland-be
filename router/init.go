@@ -32,22 +32,24 @@ func group(r *gin.Engine) {
 		})
 	})
 
+	r.GET("/statistics", api.GetStatistics)
+
 	rank(r.Group("/rank"))
 	file(r.Group("/file"))
 }
 
 func rank(rg *gin.RouterGroup) {
 	rg.GET("/group/:key", api.GetRankGroup)
-	rg.POST("/group", api.CreateRankGroup)
-	rg.PUT("/group/:id", api.UpdateRankGroup)
+	rg.POST("/group", middleware.WriteHeader(), api.CreateRankGroup)
+	rg.PUT("/group/:id", middleware.WriteHeader(), api.UpdateRankGroup)
 
 	rg.GET("/:key", api.GetRank)
-	rg.POST("/", api.CreateRank)
-	rg.PUT("/:id", api.UpdateRank)
+	rg.POST("/", middleware.WriteHeader(), api.CreateRank)
+	rg.PUT("/:id", middleware.WriteHeader(), api.UpdateRank)
 	rg.GET("/search", api.SearchRank)
 }
 
 func file(rg *gin.RouterGroup) {
-	rg.POST("/upload", api.Upload)
+	rg.POST("/upload", middleware.WriteHeader(), api.Upload)
 	rg.GET("/download", api.Download)
 }

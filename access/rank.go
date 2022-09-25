@@ -74,3 +74,19 @@ func SearchRank(query string, pageSize int) (ranks []model.Rank, err error) {
 
 	return ranks, nil
 }
+
+type RankStatistics struct {
+	RankCnt int32
+	ViewCnt int32
+}
+
+func GetRankStatistics() (rankCnt, ViewCnt int32, err error) {
+	rs := RankStatistics{}
+	db := database.GetDB().Model(&model.Rank{})
+	sql := db.Select("count(*) as rank_cnt", "sum(view_cnt) as view_cnt").Find(&rs)
+	if sql.Error != nil {
+		return 0, 0, sql.Error
+	}
+
+	return rs.RankCnt, rs.ViewCnt, nil
+}

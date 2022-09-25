@@ -14,8 +14,9 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-.vscode/
-file/*
-config/config.yaml
+.vscode
+file
+config
+!/config/config.template.yaml
 output
 sqlite.db

@@ -3,7 +3,6 @@ package utils
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,6 +14,7 @@ type Config struct {
 		Port      string `yaml:"port"`
 		Cors      string `yaml:"cors-allow-origin"`
 		Migration bool   `yaml:"migration"`
+		Env       string `yaml:"env"`
 	} `yaml:"application"`
 	Log struct {
 		Dir string `yaml:"dir"`
@@ -30,29 +30,28 @@ type Config struct {
 		Database   int    `yaml:"database"`
 		MaxRetries int    `yaml:"max-retry"`
 	} `yaml:"redis"`
-	MySQL struct {
-		Username  string `yaml:"username"`
-		Password  string `yaml:"password"`
-		Host      string `yaml:"host"`
-		Port      string `yaml:"port"`
-		Database  string `yaml:"database"`
-		Charset   string `yaml:"charset"`
-		ParseTime bool   `yaml:"parse-time"`
-	} `yaml:"mysql"`
+	PostgreSQL struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		DBname   string `yaml:"dbname"`
+		TimeZone string `yaml:"time-zone"`
+	} `yaml:"postgresql"`
 }
 
-func init() {
-	file, err := os.Open("config/config.yaml")
+func InitConfig() error {
+	file, err := os.Open("config/config.dev.yaml")
 	if err != nil {
-		logrus.WithError(err).Fatalf("config.yml file not found in config directory")
+		return err
 	}
 
 	conf = &Config{}
 	err = yaml.NewDecoder(file).Decode(conf)
 	if err != nil {
-		logrus.Fatalf("config.yml file incorrect format cannot be resolved, error=%v", err)
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func GetConfig() *Config {

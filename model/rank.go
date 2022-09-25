@@ -8,12 +8,12 @@ import (
 )
 
 type Rank struct {
-	ID        int64  `gorm:"primary_key"`
+	ID        int64  `gorm:"type:bigint;primary_key"`
 	UniqueKey string `gorm:"type:varchar(200);unique;not null"`
-	Name      string `gorm:"type:varchar(200)"`
-	Content   string `gorm:"type:MEDIUMTEXT"`
-	FileID    int64  `gorm:"column:file_id"`
-	ViewCnt   int64  `gorm:"index"`
+	Name      string `gorm:"type:varchar(200);not null"`
+	Content   string `gorm:"type:TEXT"`
+	FileID    int64  `gorm:"type:bigint;column:file_id"`
+	ViewCnt   int64  `gorm:"type:int;index"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
