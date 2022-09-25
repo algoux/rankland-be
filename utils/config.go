@@ -46,7 +46,7 @@ type Config struct {
 }
 
 func InitConfig() error {
-	file, err := os.Open("config/config.yaml")
+	file, err := os.Open("config/config.dev.yaml")
 	if err != nil {
 		return err
 	}

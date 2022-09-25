@@ -2,6 +2,7 @@ package logic
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"rankland/access"
@@ -50,8 +51,8 @@ func getFilePath() string {
 }
 
 func getFileMD5(file []byte) string {
-	md5 := md5.Sum(file)
-	return string(md5[:])
+	hash := md5.Sum(file)
+	return hex.EncodeToString(hash[:])
 }
 
 func readFile(name, path string) ([]byte, error) {
