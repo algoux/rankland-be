@@ -112,12 +112,15 @@ func (r *Ranks) Search(query string, pageSize int) error {
 	}
 
 	for _, rank := range rs {
+		name := rank.Name
+		content := rank.Content
+		fileID := rank.FileID
 		r.Ranks = append(r.Ranks, Rank{
 			ID:        rank.ID,
 			UniqueKey: rank.UniqueKey,
-			Name:      &rank.Name,
-			Content:   &rank.Content,
-			FileID:    &rank.FileID,
+			Name:      &name,
+			Content:   &content,
+			FileID:    &fileID,
 			ViewCnt:   rank.ViewCnt,
 			CreatedAt: rank.CreatedAt,
 			UpdatedAt: rank.UpdatedAt,
