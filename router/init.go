@@ -43,14 +43,16 @@ func group(r *gin.Engine) {
 }
 
 func rank(rg *gin.RouterGroup) {
-	rg.GET("/group/:key", api.GetRankGroup)
-	rg.POST("/group", middleware.WriteHeader(), api.CreateRankGroup)
-	rg.PUT("/group/:id", middleware.WriteHeader(), api.UpdateRankGroup)
-
+	rg.POST("", middleware.WriteHeader(), api.CreateRank)
 	rg.GET("/:key", api.GetRank)
-	rg.POST("/", middleware.WriteHeader(), api.CreateRank)
 	rg.PUT("/:id", middleware.WriteHeader(), api.UpdateRank)
 	rg.GET("/search", api.SearchRank)
+
+	g := rg.Group("/group")
+	g.POST("", middleware.WriteHeader(), api.CreateRankGroup)
+	g.GET("/:key", api.GetRankGroup)
+	g.PUT("/:id", middleware.WriteHeader(), api.UpdateRankGroup)
+
 }
 
 func file(rg *gin.RouterGroup) {
