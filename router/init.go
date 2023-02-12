@@ -39,6 +39,7 @@ func group(r *gin.Engine) {
 	r.GET("/statistics", api.GetStatistics)
 
 	rank(r.Group("/rank"))
+	contest(r.Group("/contest"))
 	file(r.Group("/file"))
 }
 
@@ -53,6 +54,15 @@ func rank(rg *gin.RouterGroup) {
 	g.GET("/:key", api.GetRankGroup)
 	g.PUT("/:id", middleware.WriteHeader(), api.UpdateRankGroup)
 
+}
+
+func contest(rg *gin.RouterGroup) {
+	rg.GET("/:id", api.GetContest)
+	rg.POST("", api.CreateContest)
+	rg.PUT("/:id", api.UpdateContest)
+	rg.DELETE("/:id", api.DeleteContest)
+
+	rg.POST("/record", api.SetRecord) // 比赛提交记录
 }
 
 func file(rg *gin.RouterGroup) {
