@@ -5,14 +5,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"rankland/access"
+	"rankland/model/file"
 	"time"
 )
 
 const fileDir = "file"
 
 func GetFileByID(id int64) (string, string, error) {
-	f, err := access.GetFileByID(id)
+	f, err := file.GetFileByID(id)
 	if err != nil {
 		return "", "", err
 	}
@@ -24,19 +24,19 @@ func GetFileByID(id int64) (string, string, error) {
 }
 
 func GetFileID(md5 string) (int64, error) {
-	return access.GetFileID(md5)
+	return file.GetFileID(md5)
 }
 
-func CreateFile(name string, file []byte) (int64, error) {
-	md5 := getFileMD5(file)
+func CreateFile(name string, f []byte) (int64, error) {
+	md5 := getFileMD5(f)
 	path := getFilePath()
 
 	// 此处先进行保存文件，再将文件信息写入 db，是为了防止数据写入 db 后，文件保存出错产生 db 脏数据
-	if err := writeFile(name, path, file); err != nil {
+	if err := writeFile(name, path, f); err != nil {
 		return 0, err
 	}
 
-	id, err := access.CreateFile(name, md5, path)
+	id, err := file.CreateFile(name, md5, path)
 	if err != nil {
 		return 0, err
 	}
@@ -84,7 +84,7 @@ func NewFile() *File {
 }
 
 func (f *File) GetByID() error {
-	file, err := access.GetFileByID(f.ID)
+	file, err := file.GetFileByID(f.ID)
 	if err != nil {
 		return err
 	}

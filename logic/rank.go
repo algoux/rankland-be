@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"rankland/access"
+	"rankland/model/rank"
 	"time"
 )
 
@@ -18,7 +18,7 @@ type Rank struct {
 }
 
 func GetRankByID(id int64) (*Rank, error) {
-	r, err := access.GetRankByID(id)
+	r, err := rank.GetRankByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func GetRankByID(id int64) (*Rank, error) {
 }
 
 func GetRankByUniqueKey(uniqueKey string) (*Rank, error) {
-	r, err := access.GetRankByUniqueKey(uniqueKey)
+	r, err := rank.GetRankByUniqueKey(uniqueKey)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func CreateRank(r Rank) (int64, error) {
 		fileID = *r.FileID
 	}
 
-	id, err := access.CreateRank(r.UniqueKey, name, content, fileID)
+	id, err := rank.CreateRank(r.UniqueKey, name, content, fileID)
 	if err != nil {
 		return 0, err
 	}
@@ -91,7 +91,7 @@ func UpdateRank(r Rank) error {
 	if r.FileID != nil {
 		updates["file_id"] = *r.FileID
 	}
-	return access.UpdateRank(r.ID, updates)
+	return rank.UpdateRank(r.ID, updates)
 }
 
 type Ranks struct {
@@ -106,7 +106,7 @@ func NewRanks() *Ranks {
 }
 
 func (r *Ranks) Search(query string, pageSize int) error {
-	rs, err := access.SearchRank(query, pageSize)
+	rs, err := rank.SearchRank(query, pageSize)
 	if err != nil {
 		return err
 	}

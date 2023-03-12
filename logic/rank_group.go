@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"rankland/access"
+	"rankland/model/rank"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type RankGroup struct {
 }
 
 func GetRankGroupByID(id int64) (*RankGroup, error) {
-	rg, err := access.GetRankGroupByID(id)
+	rg, err := rank.GetRankGroupByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func GetRankGroupByID(id int64) (*RankGroup, error) {
 }
 
 func GetRankGroupByUniqueKey(uniqueKey string) (*RankGroup, error) {
-	rg, err := access.GetRankGroupByUniqueKey(uniqueKey)
+	rg, err := rank.GetRankGroupByUniqueKey(uniqueKey)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func GetRankGroupByUniqueKey(uniqueKey string) (*RankGroup, error) {
 }
 
 func CreateRankGroup(rg RankGroup) (int64, error) {
-	id, err := access.CreateRankGroup(rg.UniqueKey, *rg.Name, *rg.Content)
+	id, err := rank.CreateRankGroup(rg.UniqueKey, *rg.Name, *rg.Content)
 	if err != nil {
 		return 0, err
 	}
@@ -70,5 +70,5 @@ func UpdateRankGroup(rg RankGroup) error {
 	if rg.Content != nil {
 		updates["content"] = *rg.Content
 	}
-	return access.UpdateRankGroup(rg.ID, updates)
+	return rank.UpdateRankGroup(rg.ID, updates)
 }

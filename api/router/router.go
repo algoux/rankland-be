@@ -1,33 +1,14 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"rankland/api"
 	"rankland/middleware"
-	"rankland/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-func InitGin() error {
-	app := utils.GetConfig().Application
-	// 默认开启了 logger 和 recovery
-	router := gin.Default()
-	if app.Env == utils.EnvProd {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	router.Use(
-		middleware.Cors(app.Cors), // 启用跨域拦截
-		middleware.Error(),        // 启用 Error 处理
-	)
-
-	group(router)
-	return router.Run(fmt.Sprintf("%v:%v", app.Host, app.Port))
-}
-
-func group(r *gin.Engine) {
+func Group(r *gin.Engine) {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"code":    0,
@@ -58,11 +39,13 @@ func rank(rg *gin.RouterGroup) {
 
 func contest(rg *gin.RouterGroup) {
 	rg.GET("/:id", api.GetContest)
-	rg.POST("", api.CreateContest)
-	rg.PUT("/:id", api.UpdateContest)
-	rg.DELETE("/:id", api.DeleteContest)
+	rg.POST("", middleware.WriteHeader(), api.CreateContest)
+	rg.PUT("/:id", middleware.WriteHeader(), api.UpdateContest)
+	rg.DELETE("/:id", middleware.WriteHeader(), api.DeleteContest)
 
-	rg.POST("/record", api.SetRecord) // 比赛提交记录
+	rg.POST("/record/:id", middleware.WriteHeader(), api.SetRecord) // 比赛提交记录
+	rg.GET("/rank/:id", api.GetRankByContestID)
+	rg.GET("/record/:id", api.GetRecordByContestID)
 }
 
 func file(rg *gin.RouterGroup) {

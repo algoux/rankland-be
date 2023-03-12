@@ -1,4 +1,4 @@
-package contest
+package srk
 
 import "time"
 

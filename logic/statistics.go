@@ -1,7 +1,9 @@
 package logic
 
-import "rankland/access"
+import (
+	"rankland/model/rank"
+)
 
 func GetStatistics() (rankCnt, viewCnt int32, err error) {
-	return access.GetRankStatistics()
+	return rank.GetRankStatistics()
 }

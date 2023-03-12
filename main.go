@@ -1,30 +1,35 @@
 package main
 
 import (
-	"rankland/database"
-	"rankland/router"
-	"rankland/utils"
+	"fmt"
+	"rankland/api/router"
+	"rankland/load"
+	"rankland/middleware"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	if err := utils.InitConfig(); err != nil {
-		logrus.WithError(err).Fatalf("init config failed")
-	}
+	load.Init()
 
-	if err := database.InitPostgreSQL(); err != nil {
+	if err := load.InitPostgreSQL(); err != nil {
 		logrus.WithError(err).Fatalf("init postgresql failed")
 	}
+	load.InitRedis()
 
-	// DB 数据表迁移
-	if utils.GetConfig().Application.Migration {
-		if err := database.Migration(); err != nil {
-			logrus.WithError(err).Fatalf("migration db table failed")
-		}
+	app := load.Conf.Application
+	// 默认开启了 logger 和 recovery
+	r := gin.Default()
+	if app.Env == load.EnvProd {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
-	if err := router.InitGin(); err != nil {
-		logrus.WithError(err).Fatalf("init application failed")
-	}
+	r.Use(
+		middleware.Cors(app.Cors), // 启用跨域拦截
+		middleware.Error(),        // 启用 Error 处理
+	)
+
+	router.Group(r)
+	r.Run(fmt.Sprintf("%v:%v", app.Host, app.Port))
 }

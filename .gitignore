@@ -15,7 +15,7 @@
 # vendor/
 
 .vscode
-file
+/file
 config
 !/config/config.template.yaml
 output

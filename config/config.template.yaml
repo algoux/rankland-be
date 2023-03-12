@@ -3,7 +3,6 @@ application:
   host: 127.0.0.1  # 主机ip 或者域名，默认0.0.0.0
   port: 8000 # 服务端口
   cors-allow-origin: "*" # 允许的跨域请求
-  migration: false # 数据库迁移，需确定数据库是否正常
   env: dev # dev prod 分别代表开发环境和正式环境
 log:
   dir: temp/logs # 日志文件存放路径

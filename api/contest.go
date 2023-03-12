@@ -1,9 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"rankland/errcode"
-	"rankland/interface/contest"
 	"rankland/logic"
+	"rankland/logic/srk"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -25,13 +26,13 @@ func GetContest(c *gin.Context) {
 }
 
 func CreateContest(c *gin.Context) {
-	ct := contest.Contest{}
-	if err := c.ShouldBindJSON(&ct); err != nil {
+	sc := srk.Contest{}
+	if err := c.ShouldBindJSON(&sc); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
 
-	id, err := logic.CreateContest(ct)
+	id, err := logic.CreateContest(sc)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
@@ -46,7 +47,7 @@ func UpdateContest(c *gin.Context) {
 		return
 	}
 
-	ct := contest.Contest{}
+	ct := srk.Contest{}
 	if err := c.ShouldBindJSON(&ct); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
@@ -56,11 +57,47 @@ func UpdateContest(c *gin.Context) {
 }
 
 func DeleteContest(c *gin.Context) {
-
+	statusOk(c, nil)
 }
 
-func getRankByContestID(c *gin.Context) {
+func GetRankByContestID(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	srkStr, err := logic.GetRankByContestID(id)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	srk := make(map[string]interface{})
+	err = json.Unmarshal([]byte(srkStr), &srk)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	statusOk(c, srk)
+}
 
+func GetRecordByContestID(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	recordStr, err := logic.GetRecordsByContestID(id)
+	if err != nil {
+		statusOk(c, nil)
+		return
+	}
+	records := []interface{}{}
+	err = json.Unmarshal([]byte(recordStr), &records)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	statusOk(c, records)
 }
 
 func SetRecord(c *gin.Context) {
@@ -69,7 +106,7 @@ func SetRecord(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	records := contest.Records{}
+	records := srk.Records{}
 	if err := c.ShouldBindJSON(&records); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return

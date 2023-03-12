@@ -1,7 +1,7 @@
-package model
+package file
 
 import (
-	"rankland/utils"
+	"rankland/util"
 	"time"
 
 	"gorm.io/gorm"
@@ -23,6 +23,6 @@ func (f *File) TableName() string {
 }
 
 func (f *File) BeforeCreate(tx *gorm.DB) error {
-	f.ID = utils.Generator.Generate().Int64()
+	f.ID = util.Generator.Generate().Int64()
 	return nil
 }

@@ -1,19 +1,16 @@
-package contest
+package srk
 
 import "time"
 
 type Contest struct {
-	Config   Config    `json:"config"`
+	Title          map[string]string `json:"title"`
+	StartAt        time.Time         `json:"startAt"`        // binding:"datetime=2006-01-02T15:04:05Z07:00"`
+	EndAt          time.Time         `json:"endAt"`          // binding:"datetime=2006-01-02T15:04:05Z07:00"`
+	FrozenDuration time.Duration     `json:"frozenDuration"` // 单位/秒
+
 	Problems []Problem `json:"problems"`
 	Members  []Member  `json:"members"`
 	Markers  []Marker  `json:"markers"`
-}
-
-type Config struct {
-	Title          map[string]string `json:"title"`
-	StartAt        time.Time         `json:"startAt" binding:"datetime=2006-01-02T15:04:05Z07:00"`
-	EndAt          time.Time         `json:"endAt" binding:"datetime=2006-01-02T15:04:05Z07:00"`
-	FrozenDuration int64             `json:"frozenDuration"` // 单位/秒
 }
 
 type Problem struct {

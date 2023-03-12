@@ -1,4 +1,4 @@
-package utils
+package load
 
 import (
 	"os"
@@ -11,15 +11,14 @@ const (
 	EnvProd = "prod"
 )
 
-var conf *Config
+var Conf *Config
 
 type Config struct {
 	Application struct {
-		Host      string `yaml:"host"`
-		Port      string `yaml:"port"`
-		Cors      string `yaml:"cors-allow-origin"`
-		Migration bool   `yaml:"migration"`
-		Env       string `yaml:"env"`
+		Host string `yaml:"host"`
+		Port string `yaml:"port"`
+		Cors string `yaml:"cors-allow-origin"`
+		Env  string `yaml:"env"`
 	} `yaml:"application"`
 	Log struct {
 		Dir string `yaml:"dir"`
@@ -45,20 +44,15 @@ type Config struct {
 	} `yaml:"postgresql"`
 }
 
-func InitConfig() error {
+func Init() {
 	file, err := os.Open("config/config.yaml")
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	conf = &Config{}
-	err = yaml.NewDecoder(file).Decode(conf)
+	Conf = &Config{}
+	err = yaml.NewDecoder(file).Decode(Conf)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return nil
-}
-
-func GetConfig() *Config {
-	return conf
 }
