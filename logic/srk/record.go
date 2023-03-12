@@ -6,7 +6,7 @@ type Record struct {
 	MemberID     string    `json:"memberID"`
 	ProblemID    string    `json:"problemID"`
 	Result       string    `json:"result"`
-	SulotionTime time.Time `json:"sulotion" binding:"datetime=2006-01-02T15:04:05Z07:00"`
+	SulotionTime time.Time `json:"sulotionTime"` // binding:"datetime=2006-01-02T15:04:05Z07:00"`
 }
 
 type Records struct {
