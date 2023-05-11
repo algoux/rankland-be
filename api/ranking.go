@@ -10,29 +10,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetContest(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func GetRankingConfig(c *gin.Context) {
+	key := c.Param("key")
+	if id, err := strconv.ParseInt(key, 10, 64); err == nil {
+		ct, err := logic.GetRankingConfigByID(id)
+		if err != nil {
+			c.Errors = append(c.Errors, errcode.ServerErr)
+			return
+		}
+
+		statusOk(c, ct)
+		return
+	}
+
+	ct, err := logic.GetRankingByUniqueKey(key)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	contest, err := logic.GetContestByID(id)
-	if err != nil {
-		c.Errors = append(c.Errors, errcode.ServerErr)
-		return
-	}
 
-	statusOk(c, contest)
+	statusOk(c, ct)
 }
 
-func CreateContest(c *gin.Context) {
-	sc := srk.Contest{}
+func CreateRankingConfig(c *gin.Context) {
+	sc := srk.Config{}
 	if err := c.ShouldBindJSON(&sc); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
 
-	id, err := logic.CreateContest(sc)
+	id, err := logic.CreateRankingConfig(sc)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
@@ -40,16 +47,21 @@ func CreateContest(c *gin.Context) {
 	statusOk(c, map[string]string{"id": strconv.FormatInt(id, 10)})
 }
 
-func UpdateContest(c *gin.Context) {
+func UpdateRankingConfig(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil || id <= 0 {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
 
-	ct := srk.Contest{}
+	ct := srk.Config{ID: id}
 	if err := c.ShouldBindJSON(&ct); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	err = logic.UpdateRankingConfig(ct)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
 	}
 
@@ -60,13 +72,13 @@ func DeleteContest(c *gin.Context) {
 	statusOk(c, nil)
 }
 
-func GetRankByContestID(c *gin.Context) {
+func GetRankingByConfigID(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	srkStr, err := logic.GetRankByContestID(id)
+	srkStr, err := logic.GetRankingByConfigID(id)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return

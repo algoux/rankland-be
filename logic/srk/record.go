@@ -1,12 +1,11 @@
 package srk
 
-import "time"
-
 type Record struct {
-	MemberID     string    `json:"memberID"`
-	ProblemID    string    `json:"problemID"`
-	Result       string    `json:"result"`
-	SulotionTime time.Time `json:"sulotionTime"` // binding:"datetime=2006-01-02T15:04:05Z07:00"`
+	ID        int64  `json:"id"` // 一个标记提交顺序的唯一 ID
+	MemberID  string `json:"memberID"`
+	ProblemID string `json:"problemID"`
+	Result    string `json:"result"`
+	Sulotion  int64  `json:"sulotionTime"`
 }
 
 type Records struct {
