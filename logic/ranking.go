@@ -20,8 +20,7 @@ import (
 const DateTime = 1672502400 // 2023-01-01 00:00:00
 
 var (
-	ContestRank   = map[int64]*atomic.Value{}
-	ContestRecord = map[int64]*atomic.Value{}
+	Ranking = map[int64]*atomic.Value{}
 )
 
 func GetRankingConfigByID(id int64) (srk.Config, error) {
@@ -79,7 +78,7 @@ func UpdateRankingConfig(ct srk.Config) error {
 		updates["frozen"] = c.Frozen
 	}
 	if !c.UnfrozenAt.IsZero() && c.UnfrozenAt.After(time.Unix(DateTime, 0)) && c.UnfrozenAt.After(c.StartAt) {
-		updates["unfronzen_at"] = c.UnfrozenAt
+		updates["unfrozen_at"] = c.UnfrozenAt
 	}
 
 	if c.Problem != "null" && strings.Trim(c.Problem, " ") != "" {
@@ -195,10 +194,10 @@ func srkTransfrom(ct srk.Config) (ranking.Config, error) {
 	}, nil
 }
 
-func SetRecord(contestID int64, records []srk.Record) error {
+func SetRecord(configID int64, records []srk.Record) error {
 	rMap := make(map[string][]interface{})
 	for _, r := range records {
-		k := fmt.Sprintf("%v:%v", contestID, r.MemberID)
+		k := fmt.Sprintf("%v:%v", configID, r.MemberID)
 		v := map[int64]string{r.ID: fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.Sulotion)}
 		rMap[k] = append(rMap[k], v)
 	}
@@ -215,8 +214,8 @@ func SetRecord(contestID int64, records []srk.Record) error {
 	}
 
 	go func() {
-		SetContestRank(contestID)
-		SetContestRecord(contestID, records)
+		SetRanking(configID)
+		SetRecord(configID, records)
 	}()
 	return nil
 }
@@ -264,46 +263,41 @@ func GetRecord(contestID int64, memberIDs []string) (map[string][]srk.Record, er
 	return memberRecords, nil
 }
 
-func SetContestRank(id int64) {
+func SetRanking(id int64) {
 	srk, err := GetSRKRank(id)
 	if err != nil {
 		return
 	}
-	if v, ok := ContestRank[id]; ok {
+	if v, ok := Ranking[id]; ok {
 		_ = v.Swap(srk)
 		return
 	}
 	v := &atomic.Value{}
 	v.Store(srk)
-	ContestRank[id] = v
+	Ranking[id] = v
 }
 
 func SetContestRecord(id int64, records []srk.Record) {
-	rds, _ := json.Marshal(records)
-	if v, ok := ContestRecord[id]; !ok {
-		_ = v.Swap(string(rds))
-
-	}
-	v := &atomic.Value{}
-	v.Store(string(rds))
-	ContestRecord[id] = v
+	// 需要 redis 发布
 }
 
 func GetRankingByConfigID(id int64) (string, error) {
-	if cr, ok := ContestRank[id]; !ok || cr.Load().(string) == "" {
+	if _, ok := Ranking[id]; !ok {
+		SetRanking(id)
+	}
+
+	rank, _ := Ranking[id]
+	rankStr, ok := rank.Load().(string)
+	if !ok || rankStr == "" {
 		return "", errcode.NoResultErr
 	}
 
-	val := ContestRank[id].Load().(string)
-	return val, nil
+	return rankStr, nil
 }
 
 func GetRecordsByContestID(id int64) (string, error) {
-	if cr, ok := ContestRecord[id]; !ok || cr.Load().(string) == "" {
-		return "", errcode.NoResultErr
-	}
-
-	val := ContestRecord[id].Load().(string)
+	val := "sss"
+	// 需要从 redis 中订阅
 	return val, nil
 }
 
@@ -348,11 +342,7 @@ func getVersion() string {
 
 func getContest(title map[string]string, startAt time.Time, duration, frozen srk.Duration) map[string]interface{} {
 	return map[string]interface{}{
-		"title": map[string]string{
-			"zh-CN":    title["zh"],
-			"fallback": title["zh"],
-			"en-US":    title["en"],
-		},
+		"title":          title,
 		"startAt":        startAt.Format(time.RFC3339),
 		"duration":       duration,
 		"frozenDuration": frozen,
@@ -404,63 +394,65 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			return records[i].Sulotion > records[j].Sulotion
 		})
 		isSolutions := make(map[string]bool) // 存储题目是否已经被解决
-		// solutionMap := make(map[string][]solution)
+		solutionMap := make(map[string][]solution)
 		for _, r := range records {
 			if isSolutions[r.ProblemID] {
 				continue
 			}
-			// if sc.Frozen.Sub(r.SulotionTime) <= sc.FrozenDuration*time.Second {
-			// 	solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
-			// 		result: "?",
-			// 		time:   int64(r.SulotionTime.Sub(sc.StartAt) / time.Second),
-			// 	})
-			// 	continue
-			// }
+			d, _ := sc.Duration.Duration()
+			f, _ := sc.Frozen.Duration()
+			if d-f <= time.Duration(r.Sulotion)*time.Second {
+				solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
+					result: "?",
+					time:   r.Sulotion,
+				})
+				continue
+			}
 
-			// solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
-			// 	result: r.Result,
-			// 	time:   int64(r.SulotionTime.Sub(sc.StartAt) / time.Second),
-			// })
-			// if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
-			// 	isSolutions[r.ProblemID] = true
-			// }
+			solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
+				result: r.Result,
+				time:   r.Sulotion,
+			})
+			if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
+				isSolutions[r.ProblemID] = true
+			}
 		}
 
 		var allTime, value int64
 		stats := make([]map[string]interface{}, len(sc.Problems))
-		// for i, p := range sc.Problems {
-		// 	solution, ok := solutionMap[p.().ID)]
-		// 	if !ok {
-		// 		stats[i] = map[string]interface{}{
-		// 			"result": nil,
-		// 			"time":   []interface{}{0, "s"},
-		// 			"tries":  0,
-		// 		}
-		// 		continue
-		// 	}
+		for i, p := range sc.Problems {
+			solution, ok := solutionMap[p["id"].(string)]
+			if !ok {
+				stats[i] = map[string]interface{}{
+					"result": nil,
+					"time":   []interface{}{0, "s"},
+					"tries":  0,
+				}
+				continue
+			}
 
-		// 	sLen := len(solution)
-		// 	pTime := solution[sLen-1].time + int64(20*60*(sLen-1))
-		// 	sols := make([]map[string]interface{}, 0, len(solutionMap[p.ID]))
-		// 	for _, s := range solutionMap[p.ID] {
-		// 		sols = append(sols, map[string]interface{}{
-		// 			"result": s.result,
-		// 			"time":   []interface{}{s.time, "s"},
-		// 		})
-		// 	}
-		// 	stats[i] = map[string]interface{}{
-		// 		"result":    SR_WrongAnswer,
-		// 		"time":      []interface{}{0, "s"},
-		// 		"tries":     sLen - 1,
-		// 		"solutions": sols,
-		// 	}
-		// 	if isSolutions[p.ID] {
-		// 		stats[i]["result"] = SR_Accepted
-		// 		stats[i]["time"] = []interface{}{pTime, "s"}
-		// 		allTime += pTime
-		// 		value += 1
-		// 	}
-		// }
+			sLen := len(solution)
+			pTime := solution[sLen-1].time + int64(20*60*(sLen-1))
+			sols := make([]map[string]interface{}, 0, len(solutionMap[p["id"].(string)]))
+			for _, s := range solutionMap[p["id"].(string)] {
+				sols = append(sols, map[string]interface{}{
+					"result": s.result,
+					"time":   []interface{}{s.time, "s"},
+				})
+			}
+			stats[i] = map[string]interface{}{
+				"result":    SR_WrongAnswer,
+				"time":      []interface{}{0, "s"},
+				"tries":     sLen - 1,
+				"solutions": sols,
+			}
+			if isSolutions[p["id"].(string)] {
+				stats[i]["result"] = SR_Accepted
+				stats[i]["time"] = []interface{}{pTime, "s"}
+				allTime += pTime
+				value += 1
+			}
+		}
 		rows = append(rows, row{
 			allTime:  allTime,
 			value:    value,
@@ -476,28 +468,13 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 	})
 
 	rs := make([]map[string]interface{}, 0, len(rows))
-	// for _, row := range rows {
-	// 	teamMember := make([]interface{}, 0, len(row.user.TeamMembers))
-	// 	for _, t := range row.user.TeamMembers {
-	// 		teamMember = append(teamMember, map[string]string{"name": t})
-	// 	}
-	// 	user := map[string]interface{}{
-	// 		"id":           row.user.ID,
-	// 		"name":         row.user.Name,
-	// 		"organization": row.user.Organization,
-	// 		"official":     row.user.Official,
-	// 		"teamMembers":  teamMember,
-	// 	}
-	// 	for _, m := range sc.Markers {
-	// 		if row.user.MarkerID == m.ID {
-	// 			user["marker"] = m.ID
-	// 		}
-	// 	}
-	// 	rs = append(rs, map[string]interface{}{
-	// 		"score":    map[string]interface{}{"value": row.value, "time": []interface{}{row.allTime, "s"}},
-	// 		"statuses": row.statuses,
-	// 		"user":     user,
-	// 	})
-	// }
+	for _, row := range rows {
+		user := row.user
+		rs = append(rs, map[string]interface{}{
+			"score":    map[string]interface{}{"value": row.value, "time": []interface{}{row.allTime, "s"}},
+			"statuses": row.statuses,
+			"user":     user,
+		})
+	}
 	return rs
 }

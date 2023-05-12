@@ -17,7 +17,6 @@ func Group(r *gin.Engine) {
 		})
 	})
 
-	r.GET("/ws/:id", api.WSHandler)
 	r.GET("/statistics", api.GetStatistics)
 
 	rank(r.Group("/rank"))
@@ -35,7 +34,6 @@ func rank(rg *gin.RouterGroup) {
 	g.POST("", middleware.WriteHeader(), api.CreateRankGroup)
 	g.GET("/:key", api.GetRankGroup)
 	g.PUT("/:id", middleware.WriteHeader(), api.UpdateRankGroup)
-
 }
 
 func ranking(rg *gin.RouterGroup) {
@@ -44,9 +42,10 @@ func ranking(rg *gin.RouterGroup) {
 	rg.PUT("/config/:id", middleware.WriteHeader(), api.UpdateRankingConfig)
 	rg.DELETE("/config/:id", middleware.WriteHeader(), api.DeleteContest)
 
-	rg.GET("/record/:id", api.GetRecordByContestID)
-	rg.POST("/record/:id", middleware.WriteHeader(), api.SetRecord) // 比赛提交记录
 	rg.GET("/:id", api.GetRankingByConfigID)
+	rg.GET("/record/:id", api.WSHandler)
+	// rg.GET("/record/:id", api.GetRecordByContestID)
+	rg.POST("/record/:id", middleware.WriteHeader(), api.SetRecord) // 比赛提交记录
 }
 
 func file(rg *gin.RouterGroup) {

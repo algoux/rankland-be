@@ -5,7 +5,7 @@ type Record struct {
 	MemberID  string `json:"memberID"`
 	ProblemID string `json:"problemID"`
 	Result    string `json:"result"`
-	Sulotion  int64  `json:"sulotionTime"`
+	Sulotion  int64  `json:"sulotion"` // s
 }
 
 type Records struct {
