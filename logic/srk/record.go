@@ -7,7 +7,3 @@ type Record struct {
 	Result    string `json:"result"`
 	Sulotion  int64  `json:"sulotion"` // s
 }
-
-type Records struct {
-	Records []Record `json:"records"`
-}

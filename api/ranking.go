@@ -118,12 +118,12 @@ func SetRecord(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	records := srk.Records{}
+	records := make([]srk.Record, 0)
 	if err := c.ShouldBindJSON(&records); err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	err = logic.SetRecord(id, records.Records)
+	err = logic.SetRecord(id, records)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return

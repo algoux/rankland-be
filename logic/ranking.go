@@ -198,7 +198,7 @@ func SetRecord(configID int64, records []srk.Record) error {
 	rMap := make(map[string][]interface{})
 	for _, r := range records {
 		k := fmt.Sprintf("%v:%v", configID, r.MemberID)
-		v := map[int64]string{r.ID: fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.Sulotion)}
+		v := map[string]string{strconv.FormatInt(r.ID, 10): fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.Sulotion)}
 		rMap[k] = append(rMap[k], v)
 	}
 
@@ -215,7 +215,7 @@ func SetRecord(configID int64, records []srk.Record) error {
 
 	go func() {
 		SetRanking(configID)
-		SetRecord(configID, records)
+		// SetRecord(configID, records)
 	}()
 	return nil
 }
@@ -286,8 +286,11 @@ func GetRankingByConfigID(id int64) (string, error) {
 		SetRanking(id)
 	}
 
-	rank, _ := Ranking[id]
-	rankStr, ok := rank.Load().(string)
+	r, ok := Ranking[id]
+	if !ok {
+		return "", errcode.NoResultErr
+	}
+	rankStr, ok := r.Load().(string)
 	if !ok || rankStr == "" {
 		return "", errcode.NoResultErr
 	}
