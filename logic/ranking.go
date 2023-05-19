@@ -84,22 +84,22 @@ func UpdateRankingConfig(ct srk.Config) error {
 	if c.Problem != "null" && strings.Trim(c.Problem, " ") != "" {
 		updates["problem"] = strings.Trim(c.Problem, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Member, " ") != "" {
+	if c.Member != "null" && strings.Trim(c.Member, " ") != "" {
 		updates["member"] = strings.Trim(c.Member, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Marker, " ") != "" {
+	if c.Marker != "null" && strings.Trim(c.Marker, " ") != "" {
 		updates["marker"] = strings.Trim(c.Marker, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Series, " ") != "" {
+	if c.Series != "null" && strings.Trim(c.Series, " ") != "" {
 		updates["series"] = strings.Trim(c.Series, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Sorter, " ") != "" {
+	if c.Sorter != "null" && strings.Trim(c.Sorter, " ") != "" {
 		updates["sorter"] = strings.Trim(c.Sorter, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Contributor, " ") != "" {
+	if c.Contributor != "null" && strings.Trim(c.Contributor, " ") != "" {
 		updates["contributor"] = strings.Trim(c.Contributor, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Type, " ") != "" {
+	if c.Type != "null" && strings.Trim(c.Type, " ") != "" {
 		updates["type"] = strings.Trim(c.Type, " ")
 	}
 
@@ -309,6 +309,9 @@ func GetSRKRank(contestID int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if ct == nil {
+		return "", errcode.NoResultErr
+	}
 	sc, err := transfromSRK(*ct)
 	if err != nil {
 		return "", err
@@ -424,7 +427,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 		var allTime, value int64
 		stats := make([]map[string]interface{}, len(sc.Problems))
 		for i, p := range sc.Problems {
-			solution, ok := solutionMap[p["id"].(string)]
+			solution, ok := solutionMap[p["alias"].(string)]
 			if !ok {
 				stats[i] = map[string]interface{}{
 					"result": nil,
