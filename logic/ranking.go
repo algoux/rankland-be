@@ -1,9 +1,7 @@
 package logic
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -447,8 +445,8 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 
 			sLen := len(solution)
 			pTime := solution[sLen-1].time + int64(20*60*(sLen-1))
-			sols := make([]map[string]interface{}, 0, len(solutionMap[p["id"].(string)]))
-			for _, s := range solutionMap[p["id"].(string)] {
+			sols := make([]map[string]interface{}, 0, len(solutionMap[p["alias"].(string)]))
+			for _, s := range solutionMap[p["alias"].(string)] {
 				sols = append(sols, map[string]interface{}{
 					"result": s.result,
 					"time":   []interface{}{s.time, "s"},
@@ -460,7 +458,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 				"tries":     sLen - 1,
 				"solutions": sols,
 			}
-			if isSolutions[p["id"].(string)] {
+			if isSolutions[p["alias"].(string)] {
 				stats[i]["result"] = SR_Accepted
 				stats[i]["time"] = []interface{}{pTime, "s"}
 				allTime += pTime
@@ -510,7 +508,7 @@ func setRecords(id int64, records []srk.Record) {
 
 	ctx := context.Background()
 	for _, record := range records {
-		rs, ok := memberRecords[r.MemberID]
+		rs, ok := memberRecords[record.MemberID]
 		if !ok {
 			continue
 		}
@@ -521,14 +519,12 @@ func setRecords(id int64, records []srk.Record) {
 			}
 		}
 
-		buf := &bytes.Buffer{}
-		// id, problemID, memberID, result, solved
-		buf.Write([]byte{8, byte(len(record.ProblemID)), byte(len(record.MemberID)), byte(len(record.Result)), 1})
-		binary.Write(buf, binary.BigEndian, record.ID)
-		binary.Write(buf, binary.BigEndian, record.ProblemID)
-		binary.Write(buf, binary.BigEndian, record.MemberID)
-		binary.Write(buf, binary.BigEndian, record.Result)
-		binary.Write(buf, binary.BigEndian, solved)
-		pubsub.Pushlish(ctx, fmt.Sprintf("ws:%v", id), buf)
+		pubsub.Publish(ctx, fmt.Sprintf("ws:%v", id), ws.ScorllRecord{
+			ID:        record.ID,
+			ProblemID: record.ProblemID,
+			MemberID:  record.MemberID,
+			Result:    record.MemberID,
+			Solved:    solved,
+		})
 	}
 }

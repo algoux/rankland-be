@@ -1,7 +1,10 @@
 package ws
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"rankland/logic/pubsub"
 	"sync"
@@ -32,15 +35,40 @@ func setRecordConn(id int64, conn *websocket.Conn) {
 	})
 }
 
+type ScorllRecord struct {
+	ID        int64
+	ProblemID string
+	MemberID  string
+	Result    string
+	Solved    int8
+}
+
+func (sr ScorllRecord) MarshalBinary() (data []byte, err error) {
+	bytes, err := json.Marshal(sr)
+	return bytes, err
+}
+
 func writeRecord(id int64) {
 	ctx := context.Background()
-	channel := make(chan []byte, 100)
-	pubsub.Subscribe(ctx, fmt.Sprintf("ws:%v", id), channel)
+	channel := make(chan string, 100)
+	go pubsub.Subscribe(ctx, fmt.Sprintf("ws:%v", id), channel)
 
 	sr := syncRecord[id]
-	for b := range channel {
+	for str := range channel {
+		r := &ScorllRecord{}
+		json.Unmarshal([]byte(str), r)
+		buf := &bytes.Buffer{}
+		// id, problemID, memberID, result, solved
+		buf.Write([]byte{8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(r.Result)), 1})
+		binary.Write(buf, binary.BigEndian, r.ID)
+		binary.Write(buf, binary.BigEndian, r.ProblemID)
+		binary.Write(buf, binary.BigEndian, r.MemberID)
+		binary.Write(buf, binary.BigEndian, r.Result)
+		binary.Write(buf, binary.BigEndian, r.Solved)
+
 		for conn := range sr.conns {
-			conn.WriteMessage(1, b)
+			conn.WriteMessage(1, buf.Bytes())
+			// conn.WriteMessage(1, []byte(str))
 		}
 	}
 

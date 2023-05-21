@@ -56,16 +56,20 @@ func (d Duration) Duration() (time.Duration, error) {
 // SetDuration 设置 SRK 时长
 // 取最大整数单位，如：60s 可以是 [60, "s"]、[1, "min"] 最大整数单位为 min，所以取后者
 func (d *Duration) SetDuration(m time.Duration) {
+	if m == 0 {
+		*d = Duration{float64(0), TimeUnit[0]}
+	}
+
 	if m%time.Second != 0 {
-		*d = Duration{m / time.Millisecond, TimeUnit[0]}
+		*d = Duration{float64(m / time.Millisecond), TimeUnit[0]}
 	} else if m%time.Minute != 0 {
-		*d = Duration{m / time.Second, TimeUnit[1]}
+		*d = Duration{float64(m / time.Second), TimeUnit[1]}
 	} else if m%time.Hour != 0 {
-		*d = Duration{m / time.Minute, TimeUnit[2]}
+		*d = Duration{float64(m / time.Minute), TimeUnit[2]}
 	} else if m%(24*time.Hour) != 0 {
-		*d = Duration{m / time.Hour, TimeUnit[3]}
+		*d = Duration{float64(m / time.Hour), TimeUnit[3]}
 	} else {
-		*d = Duration{m / 24 / time.Hour, TimeUnit[4]}
+		*d = Duration{float64(m / 24 / time.Hour), TimeUnit[4]}
 	}
 }
 
