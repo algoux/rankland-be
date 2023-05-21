@@ -92,24 +92,16 @@ func GetRankingByConfigID(c *gin.Context) {
 	statusOk(c, srk)
 }
 
-func GetRecordByContestID(c *gin.Context) {
+func GetRecordByConfigID(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	recordStr, err := logic.GetRecordsByContestID(id)
-	if err != nil {
-		statusOk(c, nil)
-		return
-	}
-	records := []interface{}{}
-	err = json.Unmarshal([]byte(recordStr), &records)
-	if err != nil {
+	if err := logic.GetRecordByConfigID(id, c.Writer, c.Request); err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
 	}
-	statusOk(c, records)
 }
 
 func SetRecord(c *gin.Context) {

@@ -43,8 +43,7 @@ func ranking(rg *gin.RouterGroup) {
 	rg.DELETE("/config/:id", middleware.WriteHeader(), api.DeleteContest)
 
 	rg.GET("/:id", api.GetRankingByConfigID)
-	rg.GET("/record/:id", api.WSHandler)
-	// rg.GET("/record/:id", api.GetRecordByContestID)
+	rg.GET("/record/:id", api.GetRecordByConfigID)
 	rg.POST("/record/:id", middleware.WriteHeader(), api.SetRecord) // 比赛提交记录
 }
 

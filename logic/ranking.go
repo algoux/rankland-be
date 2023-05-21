@@ -1,12 +1,17 @@
 package logic
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"rankland/errcode"
 	"rankland/load"
+	"rankland/logic/pubsub"
 	"rankland/logic/srk"
+	"rankland/logic/ws"
 	"rankland/model/ranking"
 	"sort"
 	"strconv"
@@ -198,7 +203,7 @@ func SetRecord(configID int64, records []srk.Record) error {
 	rMap := make(map[string][]interface{})
 	for _, r := range records {
 		k := fmt.Sprintf("%v:%v", configID, r.MemberID)
-		v := map[string]string{strconv.FormatInt(r.ID, 10): fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.Sulotion)}
+		v := map[string]string{strconv.FormatInt(r.ID, 10): fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.SubmissionTime)}
 		rMap[k] = append(rMap[k], v)
 	}
 
@@ -215,7 +220,7 @@ func SetRecord(configID int64, records []srk.Record) error {
 
 	go func() {
 		SetRanking(configID)
-		// SetRecord(configID, records)
+		setRecords(configID, records)
 	}()
 	return nil
 }
@@ -251,11 +256,11 @@ func GetRecord(contestID int64, memberIDs []string) (map[string][]srk.Record, er
 				return nil, err
 			}
 			records = append(records, srk.Record{
-				ID:        id,
-				MemberID:  memberID,
-				ProblemID: v[0],
-				Result:    v[1],
-				Sulotion:  sulotion,
+				ID:             id,
+				MemberID:       memberID,
+				ProblemID:      v[0],
+				Result:         v[1],
+				SubmissionTime: sulotion,
 			})
 		}
 		memberRecords[memberID] = records
@@ -298,10 +303,13 @@ func GetRankingByConfigID(id int64) (string, error) {
 	return rankStr, nil
 }
 
-func GetRecordsByContestID(id int64) (string, error) {
-	val := "sss"
-	// 需要从 redis 中订阅
-	return val, nil
+func GetRecordByConfigID(id int64, writer http.ResponseWriter, req *http.Request) error {
+	wsConn, err := ws.WSHandler(writer, req, nil)
+	if err != nil {
+		return errcode.ServerErr
+	}
+	ws.NewRecordConn(id, wsConn)
+	return nil
 }
 
 func GetSRKRank(contestID int64) (string, error) {
@@ -397,7 +405,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 		}
 
 		sort.Slice(records, func(i, j int) bool {
-			return records[i].Sulotion > records[j].Sulotion
+			return records[i].SubmissionTime > records[j].SubmissionTime
 		})
 		isSolutions := make(map[string]bool) // 存储题目是否已经被解决
 		solutionMap := make(map[string][]solution)
@@ -407,17 +415,17 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			}
 			d, _ := sc.Duration.Duration()
 			f, _ := sc.Frozen.Duration()
-			if d-f <= time.Duration(r.Sulotion)*time.Second {
+			if d-f <= time.Duration(r.SubmissionTime)*time.Second {
 				solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
 					result: "?",
-					time:   r.Sulotion,
+					time:   r.SubmissionTime,
 				})
 				continue
 			}
 
 			solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
 				result: r.Result,
-				time:   r.Sulotion,
+				time:   r.SubmissionTime,
 			})
 			if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
 				isSolutions[r.ProblemID] = true
@@ -483,4 +491,44 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 		})
 	}
 	return rs
+}
+
+func setRecords(id int64, records []srk.Record) {
+	isExist := make(map[string]bool)
+	memberIDs := make([]string, 0, len(records))
+	for _, r := range records {
+		if isExist[r.MemberID] {
+			continue
+		}
+		memberIDs = append(memberIDs, r.MemberID)
+		isExist[r.MemberID] = true
+	}
+	memberRecords, err := GetRecord(id, memberIDs)
+	if err != nil {
+		return
+	}
+
+	ctx := context.Background()
+	for _, record := range records {
+		rs, ok := memberRecords[r.MemberID]
+		if !ok {
+			continue
+		}
+		solved := int8(0)
+		for _, r := range rs {
+			if r.Result == "AC" || r.Result == "FB" {
+				solved += 1
+			}
+		}
+
+		buf := &bytes.Buffer{}
+		// id, problemID, memberID, result, solved
+		buf.Write([]byte{8, byte(len(record.ProblemID)), byte(len(record.MemberID)), byte(len(record.Result)), 1})
+		binary.Write(buf, binary.BigEndian, record.ID)
+		binary.Write(buf, binary.BigEndian, record.ProblemID)
+		binary.Write(buf, binary.BigEndian, record.MemberID)
+		binary.Write(buf, binary.BigEndian, record.Result)
+		binary.Write(buf, binary.BigEndian, solved)
+		pubsub.Pushlish(ctx, fmt.Sprintf("ws:%v", id), buf)
+	}
 }
