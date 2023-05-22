@@ -59,7 +59,7 @@ func writeRecord(id int64) {
 		json.Unmarshal([]byte(str), r)
 		buf := &bytes.Buffer{}
 		// id, problemID, memberID, result, solved
-		buf.Write([]byte{8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(r.Result)), 1})
+		buf.Write([]byte{5, 8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(r.Result)), 1})
 		binary.Write(buf, binary.BigEndian, r.ID)
 		binary.Write(buf, binary.BigEndian, r.ProblemID)
 		binary.Write(buf, binary.BigEndian, r.MemberID)
@@ -67,7 +67,7 @@ func writeRecord(id int64) {
 		binary.Write(buf, binary.BigEndian, r.Solved)
 
 		for conn := range sr.conns {
-			conn.WriteMessage(1, buf.Bytes())
+			conn.WriteMessage(websocket.BinaryMessage, buf.Bytes())
 			// conn.WriteMessage(1, []byte(str))
 		}
 	}

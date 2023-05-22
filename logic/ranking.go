@@ -523,7 +523,7 @@ func setRecords(id int64, records []srk.Record) {
 			ID:        record.ID,
 			ProblemID: record.ProblemID,
 			MemberID:  record.MemberID,
-			Result:    record.MemberID,
+			Result:    record.Result,
 			Solved:    solved,
 		})
 	}
