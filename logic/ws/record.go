@@ -61,9 +61,9 @@ func writeRecord(id int64) {
 		// id, problemID, memberID, result, solved
 		buf.Write([]byte{5, 8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(r.Result)), 1})
 		binary.Write(buf, binary.BigEndian, r.ID)
-		binary.Write(buf, binary.BigEndian, r.ProblemID)
-		binary.Write(buf, binary.BigEndian, r.MemberID)
-		binary.Write(buf, binary.BigEndian, r.Result)
+		buf.Write([]byte(r.ProblemID))
+		buf.Write([]byte(r.MemberID))
+		buf.Write([]byte(r.Result))
 		binary.Write(buf, binary.BigEndian, r.Solved)
 
 		for conn := range sr.conns {
