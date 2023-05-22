@@ -453,7 +453,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 				})
 			}
 			stats[i] = map[string]interface{}{
-				"result":    SR_WrongAnswer,
+				"result":    SR_Rejected,
 				"time":      []interface{}{0, "s"},
 				"tries":     sLen - 1,
 				"solutions": sols,
@@ -514,7 +514,7 @@ func setRecords(id int64, records []srk.Record) {
 		}
 		solved := int8(0)
 		for _, r := range rs {
-			if r.Result == "AC" || r.Result == "FB" {
+			if r.Result == SR_Accepted || r.Result == SR_FirstBlood {
 				solved += 1
 			}
 		}
