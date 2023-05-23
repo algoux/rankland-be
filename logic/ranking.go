@@ -68,7 +68,7 @@ func UpdateRankingConfig(ct srk.Config) error {
 	if strings.Trim(c.UniqueKey, " ") != "" {
 		updates["unique_key"] = strings.Trim(c.UniqueKey, " ")
 	}
-	if c.Problem != "null" && strings.Trim(c.Title, " ") != "" {
+	if c.Title != "null" && strings.Trim(c.Title, " ") != "" {
 		updates["title"] = strings.Trim(c.Title, " ")
 	}
 	if !c.StartAt.IsZero() && c.StartAt.After(time.Unix(DateTime, 0)) {
@@ -198,17 +198,19 @@ func srkTransfrom(ct srk.Config) (ranking.Config, error) {
 }
 
 func SetRecord(configID int64, records []srk.Record) error {
-	rMap := make(map[string][]interface{})
+	rMap := make(map[string]map[string]string)
 	for _, r := range records {
 		k := fmt.Sprintf("%v:%v", configID, r.MemberID)
-		v := map[string]string{strconv.FormatInt(r.ID, 10): fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.SubmissionTime)}
-		rMap[k] = append(rMap[k], v)
+		if _, ok := rMap[k]; !ok {
+			rMap[k] = make(map[string]string)
+		}
+		rMap[k][strconv.FormatInt(r.ID, 10)] = fmt.Sprintf("%v,%v,%v", r.ProblemID, r.Result, r.SubmissionTime)
 	}
 
 	ctx := context.Background()
 	pipe := load.GetRedis().Pipeline()
 	for k, v := range rMap {
-		pipe.HMSet(ctx, k, v...)
+		pipe.HMSet(ctx, k, v)
 		pipe.Expire(ctx, k, 30*24*time.Hour)
 	}
 	_, err := pipe.Exec(ctx)
@@ -342,6 +344,7 @@ func GetSRKRank(contestID int64) (string, error) {
 		"problems":     sc.Problems,
 		"rows":         getRows(sc, memberRecords),
 		"markers":      sc.Markers,
+		"_now":         time.Now().Format(time.RFC3339),
 	}
 
 	v, err := json.Marshal(srkRank)
@@ -403,7 +406,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 		}
 
 		sort.Slice(records, func(i, j int) bool {
-			return records[i].SubmissionTime > records[j].SubmissionTime
+			return records[i].SubmissionTime < records[j].SubmissionTime
 		})
 		isSolutions := make(map[string]bool) // 存储题目是否已经被解决
 		solutionMap := make(map[string][]solution)
@@ -446,14 +449,14 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			sLen := len(solution)
 			pTime := solution[sLen-1].time + int64(20*60*(sLen-1))
 			sols := make([]map[string]interface{}, 0, len(solutionMap[p["alias"].(string)]))
-			for _, s := range solutionMap[p["alias"].(string)] {
+			for _, s := range solution {
 				sols = append(sols, map[string]interface{}{
 					"result": s.result,
 					"time":   []interface{}{s.time, "s"},
 				})
 			}
 			stats[i] = map[string]interface{}{
-				"result":    SR_Rejected,
+				"result":    solution[sLen-1].result,
 				"time":      []interface{}{0, "s"},
 				"tries":     sLen - 1,
 				"solutions": sols,
@@ -474,9 +477,9 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 	}
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i].value == rows[j].value {
-			return rows[i].allTime > rows[j].allTime
+			return rows[i].allTime < rows[j].allTime
 		}
-		return rows[i].value < rows[j].value
+		return rows[i].value > rows[j].value
 	})
 
 	rs := make([]map[string]interface{}, 0, len(rows))
