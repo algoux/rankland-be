@@ -455,8 +455,12 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 					"time":   []interface{}{s.time, "s"},
 				})
 			}
+			sres := solution[sLen-1].result
+			if sres != SR_FirstBlood || sres != SR_Accepted || sres != SR_Frozen {
+				sres = SR_Rejected
+			}
 			stats[i] = map[string]interface{}{
-				"result":    solution[sLen-1].result,
+				"result":    sres,
 				"time":      []interface{}{0, "s"},
 				"tries":     sLen - 1,
 				"solutions": sols,
