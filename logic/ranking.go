@@ -107,7 +107,14 @@ func UpdateRankingConfig(ct srk.Config) error {
 		updates["type"] = strings.Trim(c.Type, " ")
 	}
 
-	return ranking.Update(c.ID, updates)
+	err = ranking.Update(c.ID, updates)
+	if err != nil {
+		return err
+	}
+	go func() {
+		SetRanking(ct.ID)
+	}()
+	return nil
 }
 
 func transfromSRK(mc ranking.Config) (srk.Config, error) {
