@@ -151,8 +151,8 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 		if t <= time.Duration(r.SubmissionTime)*time.Second {
 			if r.ID == rid {
 				result = "?"
+				continue
 			}
-			continue
 		}
 
 		if r.Result == "FB" || r.Result == "AC" {
