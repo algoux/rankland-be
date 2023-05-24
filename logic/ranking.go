@@ -11,6 +11,7 @@ import (
 	"rankland/logic/srk"
 	"rankland/logic/ws"
 	"rankland/model/ranking"
+	"rankland/util"
 	"sort"
 	"strconv"
 	"strings"
@@ -392,6 +393,17 @@ const (
 )
 
 func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]interface{} {
+	cfg := sc.Sorter["config"]
+	penalty := 20 * 60 // 默认罚时 20 分钟
+	noPenalty := []string{SR_FirstBlood, SR_Accepted, SR_CompilationError, SR_UnknownError, SR_Frozen}
+	if cfg, ok := cfg.(map[string]interface{}); ok {
+		if t, err := cfg["penalty"].(srk.Duration).Duration(); err == nil {
+			penalty = int(t / time.Second)
+		}
+		if np, ok := cfg["noPenaltyResults"].([]string); ok {
+			noPenalty = np
+		}
+	}
 	rows := make([]row, 0, len(sc.Members))
 	for _, member := range sc.Members {
 		records, ok := memberRecords[member["id"].(string)]
@@ -446,8 +458,6 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 				continue
 			}
 
-			sLen := len(solution)
-			pTime := solution[sLen-1].time + int64(20*60*(sLen-1))
 			sols := make([]map[string]interface{}, 0, len(solutionMap[p["alias"].(string)]))
 			for _, s := range solution {
 				sols = append(sols, map[string]interface{}{
@@ -455,19 +465,25 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 					"time":   []interface{}{s.time, "s"},
 				})
 			}
+			sLen := len(solution)
 			sres := solution[sLen-1].result
-			if sres != SR_FirstBlood || sres != SR_Accepted || sres != SR_Frozen {
+			if sres != SR_FirstBlood && sres != SR_Accepted && sres != SR_Frozen {
 				sres = SR_Rejected
 			}
 			stats[i] = map[string]interface{}{
 				"result":    sres,
-				"time":      []interface{}{0, "s"},
-				"tries":     sLen - 1,
+				"tries":     sLen,
 				"solutions": sols,
 			}
 			if isSolutions[p["alias"].(string)] {
-				stats[i]["result"] = SR_Accepted
-				stats[i]["time"] = []interface{}{pTime, "s"}
+				stats[i]["time"] = []interface{}{solution[sLen-1].time, "s"}
+				penaltyTries := 0
+				for _, s := range solution {
+					if !util.ContainsInSlice(noPenalty, s.result) {
+						penaltyTries += 1
+					}
+				}
+				pTime := solution[sLen-1].time + int64(penalty*penaltyTries)
 				allTime += pTime
 				value += 1
 			}
