@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"rankland/logic/pubsub"
+	"rankland/logic/ws/record"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -56,15 +57,24 @@ func writeRecord(id int64) {
 	sr := syncRecord[id]
 	for str := range channel {
 		r := &ScorllRecord{}
-		json.Unmarshal([]byte(str), r)
+		err := json.Unmarshal([]byte(str), r)
+		if err != nil {
+			continue
+		}
+
+		result, solved, ok := record.GetResultAndSolved(id, r.ID, r.ProblemID, r.MemberID)
+		if !ok {
+			continue
+		}
+
 		buf := &bytes.Buffer{}
 		// id, problemID, memberID, result, solved
 		buf.Write([]byte{5, 8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(r.Result)), 1})
 		binary.Write(buf, binary.BigEndian, r.ID)
 		buf.Write([]byte(r.ProblemID))
 		buf.Write([]byte(r.MemberID))
-		buf.Write([]byte(r.Result))
-		binary.Write(buf, binary.BigEndian, r.Solved)
+		buf.Write([]byte(result))
+		binary.Write(buf, binary.BigEndian, solved)
 
 		for conn := range sr.conns {
 			conn.WriteMessage(websocket.BinaryMessage, buf.Bytes())

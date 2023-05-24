@@ -423,7 +423,8 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 		sort.Slice(records, func(i, j int) bool {
 			return records[i].SubmissionTime < records[j].SubmissionTime
 		})
-		isSolutions := make(map[string]bool) // 存储题目是否已经被解决
+		isSolutions := make(map[string]bool)       // 存储题目是否已经被解决
+		isFrozenSolutions := make(map[string]bool) // 存储封榜之后被解决的题目
 		solutionMap := make(map[string][]solution)
 		for _, r := range records {
 			if isSolutions[r.ProblemID] {
@@ -431,11 +432,18 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			}
 			d, _ := sc.Duration.Duration()
 			f, _ := sc.Frozen.Duration()
-			if d-f <= time.Duration(r.SubmissionTime)*time.Second {
+			if d-f < time.Duration(r.SubmissionTime)*time.Second {
+				if isFrozenSolutions[r.ProblemID] {
+					continue
+				}
+
 				solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
 					result: "?",
 					time:   r.SubmissionTime,
 				})
+				if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
+					isFrozenSolutions[r.ProblemID] = true
+				}
 				continue
 			}
 
@@ -518,39 +526,14 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 }
 
 func setRecords(id int64, records []srk.Record) {
-	isExist := make(map[string]bool)
-	memberIDs := make([]string, 0, len(records))
-	for _, r := range records {
-		if isExist[r.MemberID] {
-			continue
-		}
-		memberIDs = append(memberIDs, r.MemberID)
-		isExist[r.MemberID] = true
-	}
-	memberRecords, err := GetRecord(id, memberIDs)
-	if err != nil {
-		return
-	}
-
 	ctx := context.Background()
 	for _, record := range records {
-		rs, ok := memberRecords[record.MemberID]
-		if !ok {
-			continue
-		}
-		solvedMap := make(map[string]bool)
-		for _, r := range rs {
-			if r.Result == SR_Accepted || r.Result == SR_FirstBlood {
-				solvedMap[r.ProblemID] = true
-			}
-		}
-
 		pubsub.Publish(ctx, fmt.Sprintf("ws:%v", id), ws.ScorllRecord{
 			ID:        record.ID,
 			ProblemID: record.ProblemID,
 			MemberID:  record.MemberID,
 			Result:    record.Result,
-			Solved:    int8(len(solvedMap)),
+			Solved:    int8(0),
 		})
 	}
 }
