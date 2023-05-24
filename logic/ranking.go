@@ -397,8 +397,11 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 	penalty := 20 * 60 // 默认罚时 20 分钟
 	noPenalty := []string{SR_FirstBlood, SR_Accepted, SR_CompilationError, SR_UnknownError, SR_Frozen}
 	if cfg, ok := cfg.(map[string]interface{}); ok {
-		if t, err := cfg["penalty"].(srk.Duration).Duration(); err == nil {
-			penalty = int(t / time.Second)
+		if p, ok := cfg["penalty"].([]interface{}); ok {
+			d := &srk.Duration{p[0], p[1]}
+			if t, err := d.Duration(); err == nil {
+				penalty = int(t / time.Second)
+			}
 		}
 		if np, ok := cfg["noPenaltyResults"].([]string); ok {
 			noPenalty = np
