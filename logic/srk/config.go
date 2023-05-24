@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	ID         int64             `json:"id"`
+	ID         int64             `json:"id,string"`
 	UniqueKey  string            `json:"uniqueKey"`
 	Title      map[string]string `json:"title"`
 	StartAt    time.Time         `json:"startAt"`        // binding:"datetime=2006-01-02T15:04:05Z07:00"`
