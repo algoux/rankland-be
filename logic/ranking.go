@@ -538,10 +538,10 @@ func setRecords(id int64, records []srk.Record) {
 		if !ok {
 			continue
 		}
-		solved := int8(0)
+		solvedMap := make(map[string]bool)
 		for _, r := range rs {
 			if r.Result == SR_Accepted || r.Result == SR_FirstBlood {
-				solved += 1
+				solvedMap[r.ProblemID] = true
 			}
 		}
 
@@ -550,7 +550,7 @@ func setRecords(id int64, records []srk.Record) {
 			ProblemID: record.ProblemID,
 			MemberID:  record.MemberID,
 			Result:    record.Result,
-			Solved:    solved,
+			Solved:    int8(len(solvedMap)),
 		})
 	}
 }
