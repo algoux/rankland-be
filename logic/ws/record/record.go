@@ -21,15 +21,20 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 	if err != nil {
 		return "", 0, false
 	}
-	t := config.EndAt.Sub(config.StartAt)
+	t := config.EndAt.Sub(config.StartAt) - time.Duration(config.Frozen)*time.Millisecond
 
 	sort.Slice(memberRecords, func(i, j int) bool {
 		return memberRecords[i].ID < memberRecords[j].ID
 	})
 	result := ""
+	solved := int8(0)
 	problemSolved := make(map[string]bool)
 	for _, r := range memberRecords {
-		if t < time.Duration(r.SubmissionTime)*time.Second {
+		if problemSolved[r.ProblemID] {
+			continue
+		}
+
+		if t <= time.Duration(r.SubmissionTime)*time.Second {
 			if r.ID == rid {
 				result = "?"
 			}
@@ -38,13 +43,20 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 
 		if r.Result == "FB" || r.Result == "AC" {
 			problemSolved[r.ProblemID] = true
+			if t > time.Duration(r.SubmissionTime)*time.Second {
+				solved += 1
+			}
 		}
+
 		if r.ID == rid {
 			result = r.Result
 		}
 	}
+	if result == "" {
+		return "", 0, false
+	}
 
-	return result, int8(len(problemSolved)), true
+	return result, solved, true
 }
 
 func GetRecord(rankingID int64, memberID string) ([]srk.Record, error) {

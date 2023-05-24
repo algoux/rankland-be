@@ -432,7 +432,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			}
 			d, _ := sc.Duration.Duration()
 			f, _ := sc.Frozen.Duration()
-			if d-f < time.Duration(r.SubmissionTime)*time.Second {
+			if d-f <= time.Duration(r.SubmissionTime)*time.Second {
 				if isFrozenSolutions[r.ProblemID] {
 					continue
 				}
