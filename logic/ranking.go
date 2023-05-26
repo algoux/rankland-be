@@ -413,7 +413,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 	rows := make([]row, 0, len(sc.Members))
 	for _, member := range sc.Members {
 		records, ok := memberRecords[member["id"].(string)]
-		if !ok { // 校赛依据提交过的用户才能上排行榜
+		if !ok || len(records) == 0 { // 校赛依据提交过的用户才能上排行榜
 			// rows = append(rows, row{
 			// 	allTime:  0,
 			// 	value:    0,
