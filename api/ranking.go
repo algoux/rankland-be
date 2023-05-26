@@ -122,3 +122,17 @@ func SetRecord(c *gin.Context) {
 	}
 	statusOk(c, nil)
 }
+
+func ClearRecord(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ParamErr)
+		return
+	}
+	err = logic.ClearRecord(id)
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	statusOk(c, nil)
+}

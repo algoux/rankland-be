@@ -45,6 +45,7 @@ func ranking(rg *gin.RouterGroup) {
 	rg.GET("/:id", api.GetRankingByConfigID)
 	rg.GET("/record/:id", api.GetRecordByConfigID)
 	rg.POST("/record/:id", middleware.WriteHeader(), api.SetRecord) // 比赛提交记录
+	rg.DELETE("/record/:id", middleware.WriteHeader(), api.ClearRecord)
 }
 
 func file(rg *gin.RouterGroup) {

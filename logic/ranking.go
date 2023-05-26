@@ -290,10 +290,6 @@ func SetRanking(id int64) {
 	Ranking[id] = v
 }
 
-func SetContestRecord(id int64, records []srk.Record) {
-	// 需要 redis 发布
-}
-
 func GetRankingByConfigID(id int64) (string, error) {
 	if _, ok := Ranking[id]; !ok {
 		SetRanking(id)
@@ -417,13 +413,13 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 	rows := make([]row, 0, len(sc.Members))
 	for _, member := range sc.Members {
 		records, ok := memberRecords[member["id"].(string)]
-		if !ok {
-			rows = append(rows, row{
-				allTime:  0,
-				value:    0,
-				user:     member,
-				statuses: make([]map[string]interface{}, len(sc.Problems)),
-			})
+		if !ok { // 校赛依据提交过的用户才能上排行榜
+			// rows = append(rows, row{
+			// 	allTime:  0,
+			// 	value:    0,
+			// 	user:     member,
+			// 	statuses: make([]map[string]interface{}, len(sc.Problems)),
+			// })
 			continue
 		}
 
@@ -543,4 +539,16 @@ func setRecords(id int64, records []srk.Record) {
 			Solved:    int8(0),
 		})
 	}
+}
+
+func ClearRecord(id int64) error {
+	ctx := context.Background()
+	cmd := load.GetRedis().Keys(ctx, fmt.Sprintf("%v:*", id))
+	if err := cmd.Err(); err != nil {
+		return err
+	}
+	if len(cmd.Val()) == 0 {
+		return nil
+	}
+	return load.GetRedis().Del(ctx, cmd.Val()...).Err()
 }
