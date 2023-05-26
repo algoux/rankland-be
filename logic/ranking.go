@@ -550,5 +550,8 @@ func ClearRecord(id int64) error {
 	if len(cmd.Val()) == 0 {
 		return nil
 	}
+	defer func() {
+		SetRanking(id)
+	}()
 	return load.GetRedis().Del(ctx, cmd.Val()...).Err()
 }
