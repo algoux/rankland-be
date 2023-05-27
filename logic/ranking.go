@@ -360,7 +360,7 @@ func GetSRKRank(contestID int64, isUnfrozen bool) (string, error) {
 }
 
 func getVersion() string {
-	return "0.3.0"
+	return "0.3.1"
 }
 
 func getContest(title map[string]string, startAt time.Time, duration, frozen srk.Duration) map[string]interface{} {
