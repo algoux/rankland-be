@@ -78,7 +78,13 @@ func GetRankingByConfigID(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	srkStr, err := logic.GetRankingByConfigID(id)
+
+	isAdmin := false
+	ticket, ok := c.GetQuery("token")
+	if ok && ticket == "sdutpc15" {
+		isAdmin = true
+	}
+	srkStr, err := logic.GetRankingByConfigID(id, isAdmin)
 	if err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
@@ -98,7 +104,13 @@ func GetRecordByConfigID(c *gin.Context) {
 		c.Errors = append(c.Errors, errcode.ParamErr)
 		return
 	}
-	if err := logic.GetRecordByConfigID(id, c.Writer, c.Request); err != nil {
+	isAdmin := false
+	ticket, ok := c.GetQuery("token")
+	if ok && ticket == "sdutpc15" {
+		isAdmin = true
+	}
+
+	if err := logic.GetRecordByConfigID(id, c.Writer, c.Request, isAdmin); err != nil {
 		c.Errors = append(c.Errors, errcode.ServerErr)
 		return
 	}

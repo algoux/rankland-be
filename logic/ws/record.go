@@ -27,7 +27,7 @@ type RecordConn struct {
 	conns map[*websocket.Conn]bool
 }
 
-func setRecordConn(id int64, conn *websocket.Conn) {
+func setRecordConn(id int64, conn *websocket.Conn, isAdmin bool) {
 	if _, ok := syncRecord[id]; !ok {
 		syncRecord[id] = &RecordConn{
 			id:    id,
@@ -36,7 +36,7 @@ func setRecordConn(id int64, conn *websocket.Conn) {
 		}
 	}
 	sr := syncRecord[id]
-	sr.conns[conn] = true
+	sr.conns[conn] = isAdmin
 	sr.once.Do(func() {
 		go writeRecord(id)
 	})
@@ -68,23 +68,21 @@ func writeRecord(id int64) {
 			continue
 		}
 
-		result, solved, ok := GetResultAndSolved(id, r.ID, r.ProblemID, r.MemberID)
+		unfronzenRet, ok := GetResultAndSolved(id, r.ID, r.ProblemID, r.MemberID, true)
+		if !ok {
+			continue
+		}
+		fronzenRet, ok := GetResultAndSolved(id, r.ID, r.ProblemID, r.MemberID, false)
 		if !ok {
 			continue
 		}
 
-		buf := &bytes.Buffer{}
-		// id, problemID, memberID, result, solved
-		buf.Write([]byte{5, 8, byte(len(r.ProblemID)), byte(len(r.MemberID)), byte(len(result)), 1})
-		binary.Write(buf, binary.BigEndian, r.ID)
-		buf.Write([]byte(r.ProblemID))
-		buf.Write([]byte(r.MemberID))
-		buf.Write([]byte(result))
-		binary.Write(buf, binary.BigEndian, solved)
-
-		for conn := range sr.conns {
-			conn.WriteMessage(websocket.BinaryMessage, buf.Bytes())
-			// conn.WriteMessage(1, []byte(str))
+		for conn, isUnfronzen := range sr.conns {
+			if isUnfronzen {
+				conn.WriteMessage(websocket.BinaryMessage, unfronzenRet)
+			} else {
+				conn.WriteMessage(websocket.BinaryMessage, fronzenRet)
+			}
 		}
 	}
 
@@ -94,11 +92,11 @@ func writeRecord(id int64) {
 	defer delete(syncRecord, id)
 }
 
-func NewRecordConn(id int64, conn *websocket.Conn) {
+func NewRecordConn(id int64, conn *websocket.Conn, isAdmin bool) {
 	if syncRecord == nil {
 		syncRecord = make(map[int64]*RecordConn)
 	}
-	setRecordConn(id, conn)
+	setRecordConn(id, conn, isAdmin)
 }
 
 // type RecordCli struct {
@@ -126,14 +124,14 @@ func NewRecordConn(id int64, conn *websocket.Conn) {
 // 	return r.conn.Close()
 // }
 
-func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8, bool) {
+func GetResultAndSolved(id, rid int64, problemID, memberID string, isUnfrozen bool) ([]byte, bool) {
 	memberRecords, err := GetRecord(id, memberID)
 	if err != nil {
-		return "", 0, false
+		return nil, false
 	}
 	config, err := ranking.GetConfigByID(id)
 	if err != nil {
-		return "", 0, false
+		return nil, false
 	}
 	t := config.EndAt.Sub(config.StartAt) - time.Duration(config.Frozen)*time.Millisecond
 
@@ -148,7 +146,7 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 			continue
 		}
 
-		if t <= time.Duration(r.SubmissionTime)*time.Second {
+		if t <= time.Duration(r.SubmissionTime)*time.Second && !isUnfrozen {
 			if r.ID == rid {
 				result = "?"
 				continue
@@ -157,7 +155,7 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 
 		if r.Result == "FB" || r.Result == "AC" {
 			problemSolved[r.ProblemID] = true
-			if t > time.Duration(r.SubmissionTime)*time.Second {
+			if t > time.Duration(r.SubmissionTime)*time.Second || isUnfrozen {
 				solved += 1
 			}
 		}
@@ -167,10 +165,19 @@ func GetResultAndSolved(id, rid int64, problemID, memberID string) (string, int8
 		}
 	}
 	if result == "" {
-		return "", 0, false
+		return nil, false
 	}
 
-	return result, solved, true
+	buf := &bytes.Buffer{}
+	// id, problemID, memberID, result, solved
+	buf.Write([]byte{5, 8, byte(len(problemID)), byte(len(memberID)), byte(len(result)), 1})
+	binary.Write(buf, binary.BigEndian, rid)
+	buf.Write([]byte(problemID))
+	buf.Write([]byte(memberID))
+	buf.Write([]byte(result))
+	binary.Write(buf, binary.BigEndian, solved)
+
+	return buf.Bytes(), true
 }
 
 func GetRecord(rankingID int64, memberID string) ([]srk.Record, error) {

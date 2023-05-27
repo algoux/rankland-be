@@ -277,7 +277,7 @@ func GetRecord(contestID int64, memberIDs []string) (map[string][]srk.Record, er
 }
 
 func SetRanking(id int64) {
-	srk, err := GetSRKRank(id)
+	srk, err := GetSRKRank(id, false)
 	if err != nil {
 		return
 	}
@@ -290,7 +290,11 @@ func SetRanking(id int64) {
 	Ranking[id] = v
 }
 
-func GetRankingByConfigID(id int64) (string, error) {
+func GetRankingByConfigID(id int64, isAdmin bool) (string, error) {
+	if isAdmin {
+		GetSRKRank(id, true)
+	}
+
 	if _, ok := Ranking[id]; !ok {
 		SetRanking(id)
 	}
@@ -307,16 +311,16 @@ func GetRankingByConfigID(id int64) (string, error) {
 	return rankStr, nil
 }
 
-func GetRecordByConfigID(id int64, writer http.ResponseWriter, req *http.Request) error {
+func GetRecordByConfigID(id int64, writer http.ResponseWriter, req *http.Request, isAdmin bool) error {
 	wsConn, err := ws.WSHandler(writer, req, nil)
 	if err != nil {
 		return errcode.ServerErr
 	}
-	ws.NewRecordConn(id, wsConn)
+	ws.NewRecordConn(id, wsConn, isAdmin)
 	return nil
 }
 
-func GetSRKRank(contestID int64) (string, error) {
+func GetSRKRank(contestID int64, isUnfrozen bool) (string, error) {
 	ct, err := ranking.GetConfigByID(contestID)
 	if err != nil {
 		return "", err
@@ -346,7 +350,7 @@ func GetSRKRank(contestID int64) (string, error) {
 		"series":       sc.Series,
 		"contest":      getContest(sc.Title, sc.StartAt, sc.Duration, sc.Frozen),
 		"problems":     sc.Problems,
-		"rows":         getRows(sc, memberRecords),
+		"rows":         getRows(sc, memberRecords, isUnfrozen),
 		"markers":      sc.Markers,
 		"_now":         time.Now().Format(time.RFC3339),
 	}
@@ -395,7 +399,7 @@ const (
 	SR_Frozen              = "?"
 )
 
-func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]interface{} {
+func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bool) []map[string]interface{} {
 	cfg := sc.Sorter["config"]
 	penalty := 20 * 60 // 默认罚时 20 分钟
 	noPenalty := []string{SR_FirstBlood, SR_Accepted, SR_CompilationError, SR_UnknownError, SR_Frozen}
@@ -435,7 +439,7 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record) []map[string]
 			}
 			d, _ := sc.Duration.Duration()
 			f, _ := sc.Frozen.Duration()
-			if d-f <= time.Duration(r.SubmissionTime)*time.Second {
+			if d-f <= time.Duration(r.SubmissionTime)*time.Second && !isUnfrozen {
 				if isFrozenSolutions[r.ProblemID] {
 					continue
 				}
