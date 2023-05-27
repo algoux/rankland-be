@@ -417,9 +417,9 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bo
 	rows := make([]row, 0, len(sc.Members))
 	for _, member := range sc.Members {
 		records := memberRecords[member["id"].(string)]
-		// if len(records) == 0 { // 校赛依据提交过的用户才能上排行榜
-		// 	// continue
-		// }
+		if len(records) == 0 { // 校赛依据提交过的用户才能上排行榜
+			continue
+		}
 
 		sort.Slice(records, func(i, j int) bool {
 			return records[i].SubmissionTime < records[j].SubmissionTime
