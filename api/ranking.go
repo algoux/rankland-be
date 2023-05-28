@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const adminToken = "sdutpc15_rl_algoux"
+
 func GetRankingConfig(c *gin.Context) {
 	key := c.Param("key")
 	if id, err := strconv.ParseInt(key, 10, 64); err == nil {
@@ -81,7 +83,7 @@ func GetRankingByConfigID(c *gin.Context) {
 
 	isAdmin := false
 	ticket, ok := c.GetQuery("token")
-	if ok && ticket == "sdutpc15" {
+	if ok && ticket == adminToken {
 		isAdmin = true
 	}
 	srkStr, err := logic.GetRankingByConfigID(id, isAdmin)
@@ -106,7 +108,7 @@ func GetRecordByConfigID(c *gin.Context) {
 	}
 	isAdmin := false
 	ticket, ok := c.GetQuery("token")
-	if ok && ticket == "sdutpc15" {
+	if ok && ticket == adminToken {
 		isAdmin = true
 	}
 
