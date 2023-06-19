@@ -66,7 +66,7 @@ func UpdateRank(id int64, updates map[string]interface{}) error {
 }
 
 func SearchRank(query string, pageSize int) (ranks []Rank, err error) {
-	db := load.GetDB().Where("unique_key like ?", query+"%").Or("name like ?", query+"%")
+	db := load.GetDB().Where("to_tsvector('zh', unique_key || ' ' || name) @@ to_tsquery('zh', ?)", query)
 	if err := db.Limit(pageSize).Find(&ranks).Error; err != nil {
 		return ranks, err
 	}
