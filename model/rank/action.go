@@ -97,7 +97,7 @@ type RankCntStatistics struct {
 func GetRankCntStatistics() (rankCnt int32, err error) {
 	rs := RankCntStatistics{}
 	db := load.GetDB().Model(&Rank{})
-	sql := db.Select("count(*) as rank_cnt").Find(&rs)
+	sql := db.Select("count(distinct unique_key) as rank_cnt").Find(&rs)
 	if sql.Error != nil {
 		return 0, sql.Error
 	}
