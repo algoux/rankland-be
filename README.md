@@ -41,3 +41,15 @@
 > 项目运行的脚本
 
 ## 
+
+## 6. 使用Docker进行部署
+1. 在宿主机创建新的配置文件`config.yaml`（模板配置文件位于源码的`/config/config.template.yaml`），注意`application.host`需要设置为`0.0.0.0`才可以在docker进行端口转发。
+
+2. 从腾讯云拉取镜像
+    ```shell
+    docker pull ccr.ccs.tencentyun.com/algoux/rankland-be
+    ```
+3. 运行镜像
+    ```
+    docker run -p 80:8000 -v /path/config.yaml:/app/rankland/config/config.yaml -d ccr.ccs.tencentyun.com/algoux/rankland-be
+    ```
