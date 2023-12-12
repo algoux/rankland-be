@@ -27,8 +27,6 @@ ENV TZ Asia/Shanghai
 
 # Copy application and init config file
 WORKDIR /app/rankland
-RUN mkdir -p ./config
-RUN touch ./config/config.yaml
 COPY --from=builder /app/rankland rankland
 
 #Bind IO
