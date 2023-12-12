@@ -51,5 +51,5 @@
     ```
 3. 运行镜像
     ```
-    docker run -p 80:8000 -v /path/config.yaml:/app/rankland/config/config.yaml -v /path/temp/logs:/app/rankland/temp/logs -d ccr.ccs.tencentyun.com/algoux/rankland-be
+    docker run --name rankland-be-prod -p 80:8000 -v /path/config.yaml:/app/rankland/config/config.yaml -v /path/temp/logs:/app/rankland/temp/logs -d ccr.ccs.tencentyun.com/algoux/rankland-be
     ```
