@@ -20,3 +20,4 @@ config
 !/config/config.template.yaml
 output
 sqlite.db
+/tmp

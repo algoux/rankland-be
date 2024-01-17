@@ -3,7 +3,9 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"rankland/errcode"
 	"rankland/load"
@@ -353,17 +355,22 @@ func GetSRKRank(contestID int64, isUnfrozen bool) (string, error) {
 		"series":       sc.Series,
 		"contest":      getContest(sc.Title, sc.StartAt, sc.Duration, sc.Frozen),
 		"problems":     sc.Problems,
-		"rows":         getRows(sc, memberRecords, isUnfrozen),
+		"rows":         nil,
 		"markers":      sc.Markers,
 		"_now":         time.Now().Format(time.RFC3339),
 	}
+	rows, err := getRows(sc, memberRecords, isUnfrozen)
+	if err != nil {
+		return "", err
+	}
+	srkRank["rows"] = rows
 
 	v, err := json.Marshal(srkRank)
 	return string(v), err
 }
 
 func getVersion() string {
-	return "0.3.1"
+	return "0.3.4"
 }
 
 func getContest(title map[string]string, startAt time.Time, duration, frozen srk.Duration) map[string]interface{} {
@@ -402,7 +409,42 @@ const (
 	SR_Frozen              = "?"
 )
 
-func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bool) []map[string]interface{} {
+const (
+	Sorter_Algorithm_ICPC                   = "ICPC"
+	Sorter_Algorithm_Score                  = "score"
+	Sorter_Config_Preset_Score_With_Penalty = "scoreWithPenalty"
+)
+
+func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bool) ([]map[string]interface{}, error) {
+	algorithm, ok := sc.Sorter["algorithm"].(string)
+	if !ok {
+		return nil, errors.New("srk sorter algorithm is not spercified")
+	}
+	fmt.Println(algorithm, ok)
+	switch algorithm {
+	case Sorter_Algorithm_ICPC:
+		return getRowsICPC(sc, memberRecords, isUnfrozen), nil
+	case Sorter_Algorithm_Score:
+		cfg, ok := sc.Sorter["config"].(map[string]interface{})
+		if !ok {
+			return nil, errors.New("srk sorter config parse failed")
+		}
+		preset, ok := cfg["preset"].(string)
+		if !ok {
+			return nil, errors.New("srk score sorter.config.preset is not spercified")
+		}
+		if preset == Sorter_Config_Preset_Score_With_Penalty {
+			return getRowsScoreWithPenalty(sc, memberRecords, isUnfrozen), nil
+		} else {
+			return nil, errors.New("srk score sorter.config.preset is unknown")
+		}
+
+	default:
+		return nil, errors.New("srk sorter type is unknown")
+	}
+}
+
+func getRowsICPC(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bool) []map[string]interface{} {
 	cfg := sc.Sorter["config"]
 	penalty := 20 * 60 // 默认罚时 20 分钟
 	noPenalty := []string{SR_FirstBlood, SR_Accepted, SR_CompilationError, SR_UnknownError, SR_Frozen}
@@ -501,6 +543,200 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bo
 				pTime := solution[sLen-1].time + int64(penalty*penaltyTries)
 				allTime += pTime
 				value += 1
+			}
+		}
+		rows = append(rows, row{
+			allTime:  allTime,
+			value:    value,
+			user:     member,
+			statuses: stats,
+		})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].value == rows[j].value {
+			return rows[i].allTime < rows[j].allTime
+		}
+		return rows[i].value > rows[j].value
+	})
+
+	rs := make([]map[string]interface{}, 0, len(rows))
+	for _, row := range rows {
+		user := row.user
+		rs = append(rs, map[string]interface{}{
+			"score":    map[string]interface{}{"value": row.value, "time": []interface{}{row.allTime, "s"}},
+			"statuses": row.statuses,
+			"user":     user,
+		})
+	}
+	return rs
+}
+
+func getRowsScoreWithPenalty(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bool) []map[string]interface{} {
+	cfg := sc.Sorter["config"]
+	opitons := srk.ScoreWithPenaltyOption{}
+
+	if cfg, ok := cfg.(map[string]interface{}); ok {
+		optionsJSONString, _ := json.Marshal(cfg["options"])
+		json.Unmarshal(optionsJSONString, &opitons)
+	}
+
+	rows := make([]row, 0, len(sc.Members))
+	for _, member := range sc.Members {
+		records := memberRecords[member["id"].(string)]
+		// if len(records) == 0 { // 校赛依据提交过的用户才能上排行榜
+		// 	continue
+		// }
+
+		sort.Slice(records, func(i, j int) bool {
+			return records[i].SubmissionTime < records[j].SubmissionTime
+		})
+		isSolutions := make(map[string]bool)       // 存储题目是否已经被解决
+		isFrozenSolutions := make(map[string]bool) // 存储封榜之后被解决的题目
+		solutionMap := make(map[string][]solution)
+		for _, r := range records {
+			if isSolutions[r.ProblemID] {
+				continue
+			}
+			d, _ := sc.Duration.Duration()
+			f, _ := sc.Frozen.Duration()
+			if d-f <= time.Duration(r.SubmissionTime)*time.Second && !isUnfrozen {
+				if isFrozenSolutions[r.ProblemID] {
+					continue
+				}
+
+				solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
+					result: "?",
+					time:   r.SubmissionTime,
+				})
+				if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
+					isFrozenSolutions[r.ProblemID] = true
+				}
+				continue
+			}
+
+			solutionMap[r.ProblemID] = append(solutionMap[r.ProblemID], solution{
+				result: r.Result,
+				time:   r.SubmissionTime,
+			})
+			if r.Result == SR_FirstBlood || r.Result == SR_Accepted {
+				isSolutions[r.ProblemID] = true
+			}
+		}
+
+		var allTime, value int64
+		stats := make([]map[string]interface{}, len(sc.Problems))
+
+		resultPenaltyDefault := opitons.ResultPenalty
+		timePenaltyDefault := opitons.TimePenalty
+		scoreRounding := opitons.ScoreRounding
+		problemOptions := opitons.ProblemMaps
+
+		for i, p := range sc.Problems {
+			solution, ok := solutionMap[p["alias"].(string)]
+			if !ok {
+				stats[i] = map[string]interface{}{
+					"result": nil,
+					"time":   []interface{}{0, "s"},
+					"tries":  0,
+				}
+				continue
+			}
+
+			sols := make([]map[string]interface{}, 0, len(solutionMap[p["alias"].(string)]))
+			for _, s := range solution {
+				sols = append(sols, map[string]interface{}{
+					"result": s.result,
+					"time":   []interface{}{s.time, "s"},
+				})
+			}
+			sLen := len(solution)
+			sres := solution[sLen-1].result
+			if sres != SR_FirstBlood && sres != SR_Accepted && sres != SR_Frozen {
+				sres = SR_Rejected
+			}
+			stats[i] = map[string]interface{}{
+				"result":    sres,
+				"tries":     sLen,
+				"solutions": sols,
+			}
+			//初始化指针为nil
+			var resultPenalty *srk.ResultPenalty = nil
+			var timePenalty *srk.TimePenalty = nil
+
+			//若单独的题目配置中存在此题目
+			if len(problemOptions) > i {
+				//优先指向子级
+				if problemOptions[i].ResultPenalty != nil {
+					resultPenalty = problemOptions[i].ResultPenalty
+				} else {
+					resultPenalty = resultPenaltyDefault
+				}
+				if problemOptions[i].TimePenalty != nil {
+					timePenalty = problemOptions[i].TimePenalty
+				} else {
+					timePenalty = timePenaltyDefault
+				}
+			} else {
+				//不存在一律指向父级
+				resultPenalty = resultPenaltyDefault
+				timePenalty = timePenaltyDefault
+			}
+			//如果题目被解决了 这个题目就要被计分
+			if isSolutions[p["alias"].(string)] {
+				// 最后一个记录是题目时间
+				stats[i]["time"] = []interface{}{solution[sLen-1].time, "s"}
+
+				//扣分次数
+				penaltyTries := 0
+				for _, s := range solution {
+					if !util.ContainsInSlice(resultPenalty.NoPenaltyResults, s.result) {
+						penaltyTries += 1
+					}
+				}
+				//记录总解题时间
+				allTime += solution[sLen-1].time
+				//题目设定分数
+				score := float64(problemOptions[i].Score)
+				//错误解答扣分
+				if resultPenalty != nil {
+					t := float64(int64(penaltyTries) * resultPenalty.Value)
+					score -= t
+				}
+				//时间扣分
+				if timePenalty != nil {
+					// 时间单位转换
+					duration := srk.Duration{solution[sLen-1].time, "s"}
+					distDuration, _ := duration.Convert(timePenalty.TimePrecision, timePenalty.TimeRounding)
+					if timePenalty.Value != nil {
+						t := float64(distDuration[0].(int64) * *timePenalty.Value)
+						score -= t
+					}
+					if timePenalty.Ratio != nil {
+						t := float64(distDuration[0].(int64)) * (float64(problemOptions[i].Score) * *timePenalty.Ratio)
+						score -= t
+					}
+				}
+				switch scoreRounding {
+				case "floor":
+					score = math.Floor(score)
+				case "round":
+					score = math.Round(score)
+				case "ceil":
+					score = math.Ceil(score)
+				default:
+					score = math.Round(score)
+				}
+
+				//判定最大最小值
+				if problemOptions[i].MaxScore != nil {
+					score = math.Min(float64(*problemOptions[i].MaxScore), score)
+				}
+
+				if problemOptions[i].MinScore != nil {
+					score = math.Max(float64(*problemOptions[i].MinScore), score)
+				}
+
+				value += int64(score)
 			}
 		}
 		rows = append(rows, row{

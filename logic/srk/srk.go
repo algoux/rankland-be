@@ -3,6 +3,8 @@ package srk
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math"
 	"rankland/util"
 	"reflect"
 	"time"
@@ -53,6 +55,71 @@ func (d Duration) Duration() (time.Duration, error) {
 	return 0, errors.New("srk time duration format error, time unit: " + typ)
 }
 
+// Convert 方法将 Duration 转换成指定的单位，并根据指定的取整方式返回新的 Duration。
+func (d Duration) Convert(destUnit string, timeRounding string) (Duration, error) {
+	if len(d) != 2 {
+		return nil, errors.New("duration should be a slice of length 2")
+	}
+
+	// 获取原始数量和单位
+	amount, ok := d[0].(int64)
+	if !ok {
+		return nil, errors.New("the first element of duration must be a number")
+	}
+	unit, ok := d[1].(string)
+	if !ok {
+		return nil, errors.New("the second element of duration must be a string")
+	}
+
+	// 将输入转换为 time.Duration
+	var duration time.Duration
+	switch unit {
+	case "ms":
+		duration = time.Duration(float64(amount) * float64(time.Millisecond))
+	case "s":
+		duration = time.Duration(float64(amount) * float64(time.Second))
+	case "min":
+		duration = time.Duration(float64(amount) * float64(time.Minute))
+	case "h":
+		duration = time.Duration(float64(amount) * float64(time.Hour))
+	case "d":
+		duration = time.Duration(float64(amount) * float64(time.Hour) * 24)
+	default:
+		return nil, fmt.Errorf("unknown unit: %s", unit)
+	}
+
+	// 将 duration 转换为目标单位的浮点数
+	var convertedAmount float64
+	switch destUnit {
+	case "ms":
+		convertedAmount = float64(duration) / float64(time.Millisecond)
+	case "s":
+		convertedAmount = float64(duration) / float64(time.Second)
+	case "min":
+		convertedAmount = float64(duration) / float64(time.Minute)
+	case "h":
+		convertedAmount = float64(duration) / float64(time.Hour)
+	case "d":
+		convertedAmount = float64(duration) / (float64(time.Hour) * 24)
+	default:
+		return nil, fmt.Errorf("unknown destination unit: %s", destUnit)
+	}
+
+	// 根据 timeRounding 参数进行取整
+	switch timeRounding {
+	case "floor":
+		convertedAmount = math.Floor(convertedAmount)
+	case "round":
+		convertedAmount = math.Round(convertedAmount)
+	case "ceil":
+		convertedAmount = math.Ceil(convertedAmount)
+	default:
+		return nil, fmt.Errorf("unknown time rounding method: %s", timeRounding)
+	}
+
+	return Duration{int64(convertedAmount), destUnit}, nil
+}
+
 // SetDuration 设置 SRK 时长
 // 取最大整数单位，如：60s 可以是 [60, "s"]、[1, "min"] 最大整数单位为 min，所以取后者
 func (d *Duration) SetDuration(m time.Duration) {
@@ -85,6 +152,33 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 	}
 	*d = temp
 	return nil
+}
+
+type ResultPenalty struct {
+	NoPenaltyResults []string `json:"noPenaltyResults"`
+	Value            int64    `json:"value"`
+}
+
+type TimePenalty struct {
+	Value         *int64   `json:"value,omitempty"` // 使用指针表示可选和互斥的字段
+	Ratio         *float64 `json:"ratio,omitempty"` // 使用指针表示可选和互斥的字段
+	TimePrecision string   `json:"timePrecision"`
+	TimeRounding  string   `json:"timeRounding"`
+}
+
+type ProblemScoreDescriptor struct {
+	Score         int64          `json:"score"`
+	MaxScore      *int64         `json:"maxScore,omitempty"`      // 使用指针表示可选字段
+	MinScore      *int64         `json:"minScore,omitempty"`      // 使用指针表示可选字段
+	ResultPenalty *ResultPenalty `json:"resultPenalty,omitempty"` // 使用指针表示可选字段
+	TimePenalty   *TimePenalty   `json:"timePenalty,omitempty"`   // 使用指针表示可选字段
+}
+
+type ScoreWithPenaltyOption struct {
+	ResultPenalty *ResultPenalty           `json:"resultPenalty,omitempty"` // 使用指针表示可选字段
+	TimePenalty   *TimePenalty             `json:"timePenalty,omitempty"`   // 使用指针表示可选字段
+	ScoreRounding string                   `json:"scoreRounding"`
+	ProblemMaps   []ProblemScoreDescriptor `json:"problemMaps"`
 }
 
 // type Contest struct {
