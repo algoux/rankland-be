@@ -735,6 +735,7 @@ func getRowsScoreWithPenalty(sc srk.Config, memberRecords map[string][]srk.Recor
 				if problemOptions[i].MinScore != nil {
 					score = math.Max(float64(*problemOptions[i].MinScore), score)
 				}
+				stats[i]["score"] = score
 
 				value += int64(score)
 			}
