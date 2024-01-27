@@ -420,7 +420,6 @@ func getRows(sc srk.Config, memberRecords map[string][]srk.Record, isUnfrozen bo
 	if !ok {
 		return nil, errors.New("srk sorter algorithm is not spercified")
 	}
-	fmt.Println(algorithm, ok)
 	switch algorithm {
 	case Sorter_Algorithm_ICPC:
 		return getRowsICPC(sc, memberRecords, isUnfrozen), nil
