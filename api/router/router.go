@@ -9,6 +9,15 @@ import (
 )
 
 func Group(r *gin.Engine) {
+
+	r.HEAD("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"code":    0,
+			"message": "成功",
+			"data":    "",
+		})
+	})
+
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"code":    0,
