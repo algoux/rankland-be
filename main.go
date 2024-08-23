@@ -28,6 +28,7 @@ func main() {
 	r.Use(
 		middleware.Cors(app.Cors), // 启用跨域拦截
 		middleware.Error(),        // 启用 Error 处理
+		middleware.XMLHeader(),    // 启用 XML Header
 	)
 
 	router.Group(r)

@@ -27,6 +27,8 @@ func Group(r *gin.Engine) {
 	})
 
 	r.GET("/statistics", api.GetStatistics)
+	r.GET("/sitemap/ranklist.xml", api.SitemapRanklistIndex)
+	r.GET("/sitemap/ranklist_vol_:volName", api.SitemapRanklistVol)
 
 	rank(r.Group("/rank"))
 	ranking(r.Group("/ranking"))
