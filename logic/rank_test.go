@@ -2,7 +2,6 @@ package logic
 
 import (
 	"rankland/model/rank"
-	"sort"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -24,11 +23,11 @@ func TestRanks_Search(t *testing.T) {
 	}
 }
 
-func TestXxx(t *testing.T) {
-	sss := []int64{3, 2, 7, 9}
+// func TestXxx(t *testing.T) {
+// 	sss := []int64{3, 2, 7, 9}
 
-	sort.Slice(sss, func(i, j int) bool {
-		return sss[i] < sss[j]
-	})
-	t.Errorf("%+v", sss)
-}
+// 	sort.Slice(sss, func(i, j int) bool {
+// 		return sss[i] < sss[j]
+// 	})
+// 	t.Errorf("%+v", sss)
+// }
