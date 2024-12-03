@@ -90,6 +90,41 @@ func GetRankStatistics() (rankCnt, ViewCnt int32, err error) {
 	return rs.RankCnt, rs.ViewCnt, nil
 }
 
+type RankCntStatistics struct {
+	RankCnt int32
+}
+
+func GetRankCntStatistics() (rankCnt int32, err error) {
+	rs := RankCntStatistics{}
+	db := load.GetDB().Model(&Rank{})
+	sql := db.Select("count(distinct unique_key) as rank_cnt").Find(&rs)
+	if sql.Error != nil {
+		return 0, sql.Error
+	}
+
+	return rs.RankCnt, nil
+}
+
+type RankOnlyUniqueKey struct {
+	UniqueKey string
+}
+
+func GetAllRankUniqueKeys(offset int, limit int) (uniqueKey []string, err error) {
+	rs := []RankOnlyUniqueKey{}
+	db := load.GetDB().Model(&Rank{})
+	sql := db.Distinct("unique_key").Offset(offset).Limit(limit).Find(&rs)
+	if sql.Error != nil {
+		return []string{}, sql.Error
+	}
+
+	uniqueKeys := make([]string, 0, len(rs))
+	for _, r := range rs {
+		uniqueKeys = append(uniqueKeys, r.UniqueKey)
+	}
+
+	return uniqueKeys, nil
+}
+
 func GetRankGroupByID(id int64) (*RankGroup, error) {
 	rg := &RankGroup{}
 	db := load.GetDB().Where("id = ?", id)
