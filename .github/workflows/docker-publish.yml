@@ -17,15 +17,14 @@ jobs:
       - name: Log in to Tencent Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
-          registry: ccr.ccs.tencentyun.com
-          username: ${{ secrets.QCLOUD_TCR_USERNAME }}
-          password: ${{ secrets.QCLOUD_TCR_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ccr.ccs.tencentyun.com/algoux/rankland-be
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/rankland-be
 
       - name: Build and push Docker image
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
