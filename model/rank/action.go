@@ -66,7 +66,7 @@ func UpdateRank(id int64, updates map[string]interface{}) error {
 }
 
 func SearchRank(query string, pageSize int) (ranks []Rank, err error) {
-	db := load.GetDB().Where("to_tsvector('zh', unique_key || ' ' || name) @@ to_tsquery('zh', ?)", query)
+	db := load.GetDB().Where("to_tsvector('zh', unique_key || ' ' || name) @@ to_tsquery('zh', ?) AND deleted_at IS NULL", query)
 	if err := db.Limit(pageSize).Find(&ranks).Error; err != nil {
 		return ranks, err
 	}
@@ -143,7 +143,7 @@ func UpdateRankGroup(id int64, updates map[string]interface{}) error {
 }
 
 func ListAllRank() (ranks []Rank, err error) {
-	db := load.GetDB().Order("created_at DESC")
+	db := load.GetDB().Where("deleted_at IS NULL").Order("created_at DESC")
 	if err := db.Find(&ranks).Error; err != nil {
 		return ranks, err
 	}
