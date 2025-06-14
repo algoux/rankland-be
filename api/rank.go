@@ -174,6 +174,16 @@ func SearchRank(c *gin.Context) {
 	statusOk(c, rs)
 }
 
+func ListAllRank(c *gin.Context) {
+	rs := logic.NewRanks()
+	err := rs.ListAll()
+	if err != nil {
+		c.Errors = append(c.Errors, errcode.ServerErr)
+		return
+	}
+	statusOk(c, rs)
+}
+
 func getDefaultQueryInt64(c *gin.Context, key string, defaultVal int) int {
 	if v, ok := c.GetQuery(key); ok {
 		if val, err := strconv.Atoi(v); err == nil {

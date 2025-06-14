@@ -21,3 +21,5 @@ config
 output
 sqlite.db
 /tmp
+
+.DS_Store

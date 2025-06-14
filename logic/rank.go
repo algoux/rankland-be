@@ -131,3 +131,27 @@ func (r *Ranks) Search(query string, pageSize int) error {
 	}
 	return nil
 }
+
+func (r *Ranks) ListAll() error {
+	rs, err := rank.ListAllRank()
+	if err != nil {
+		return err
+	}
+
+	for _, rank := range rs {
+		name := rank.Name
+		content := rank.Content
+		fileID := rank.FileID
+		r.Ranks = append(r.Ranks, Rank{
+			ID:        rank.ID,
+			UniqueKey: rank.UniqueKey,
+			Name:      &name,
+			Content:   &content,
+			FileID:    &fileID,
+			ViewCnt:   rank.ViewCnt,
+			CreatedAt: rank.CreatedAt,
+			UpdatedAt: rank.UpdatedAt,
+		})
+	}
+	return nil
+}

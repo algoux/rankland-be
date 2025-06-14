@@ -38,6 +38,7 @@ func rank(rg *gin.RouterGroup) {
 	rg.GET("/:key", api.GetRank)
 	rg.PUT("/:id", middleware.WriteHeader(), api.UpdateRank)
 	rg.GET("/search", api.SearchRank)
+	rg.GET("/listall", api.ListAllRank)
 
 	g := rg.Group("/group")
 	g.POST("", middleware.WriteHeader(), api.CreateRankGroup)

@@ -141,3 +141,12 @@ func UpdateRankGroup(id int64, updates map[string]interface{}) error {
 	}
 	return nil
 }
+
+func ListAllRank() (ranks []Rank, err error) {
+	db := load.GetDB().Order("created_at DESC")
+	if err := db.Find(&ranks).Error; err != nil {
+		return ranks, err
+	}
+
+	return ranks, nil
+}
