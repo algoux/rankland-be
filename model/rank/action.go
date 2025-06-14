@@ -81,7 +81,7 @@ type RankStatistics struct {
 
 func GetRankStatistics() (rankCnt, ViewCnt int32, err error) {
 	rs := RankStatistics{}
-	db := load.GetDB().Model(&Rank{})
+	db := load.GetDB().Model(&Rank{}).Where("deleted_at IS NULL")
 	sql := db.Select("count(*) as rank_cnt", "sum(view_cnt) as view_cnt").Find(&rs)
 	if sql.Error != nil {
 		return 0, 0, sql.Error
